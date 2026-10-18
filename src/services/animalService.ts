@@ -75,6 +75,83 @@ export async function marcarAnimalComoReunido(id: string): Promise<AnimalCadastr
   }
 }
 
+/**
+ * Atualiza todas as informações de um cadastro existente de animal (coleção 'animais').
+ * Se um novo fotoArquivo ou fotoUrl data-URL for fornecido, atualiza o arquivo de foto no PocketBase.
+ * Se fotoArquivo for null e fotoUrl não for data-URL, mantém o arquivo atual intacto.
+ */
+export async function atualizarAnimal(
+  id: string,
+  dados: Partial<Omit<AnimalCadastro, 'id' | 'createdAt'>>,
+): Promise<AnimalCadastro> {
+  try {
+    const formData = new FormData()
+
+    if (dados.tipo !== undefined) {
+      formData.append('tipo', dados.tipo)
+    }
+    if (dados.especie !== undefined) {
+      formData.append('especie', dados.especie)
+    }
+    if (dados.porte !== undefined) {
+      formData.append('porte', dados.porte)
+    }
+    if (dados.cor !== undefined) {
+      formData.append('cor', dados.cor)
+    }
+    if (dados.cidade !== undefined) {
+      formData.append('cidade', dados.cidade)
+    }
+    if (dados.bairro !== undefined) {
+      formData.append('bairro', dados.bairro)
+    }
+    if (dados.data !== undefined) {
+      formData.append('data', dados.data)
+    }
+
+    // Campos opcionais de texto (se forem string vazia ou undefined, garante envio para limpar ou preencher)
+    formData.append('caracteristicas', dados.caracteristicas || '')
+    formData.append('descricao', dados.descricao || '')
+    formData.append('telefone', dados.telefone || '')
+    formData.append('whatsapp', dados.whatsapp || '')
+    formData.append('nome_pessoa', dados.nomePessoa || '')
+    formData.append('nome_pet', dados.nomePet || '')
+
+    // Processamento de nova foto (se o usuário escolheu um novo arquivo)
+    if (dados.fotoArquivo instanceof File) {
+      formData.append('foto', dados.fotoArquivo)
+    } else if (dados.fotoUrl && dados.fotoUrl.startsWith('data:image/')) {
+      const extensao = dados.fotoUrl.includes('image/png')
+        ? 'png'
+        : dados.fotoUrl.includes('image/webp')
+          ? 'webp'
+          : 'jpg'
+      const fileFromDataUrl = dataURLtoFile(dados.fotoUrl, `pet-${Date.now()}.${extensao}`)
+      formData.append('foto', fileFromDataUrl)
+    }
+
+    const updatedRecord = await pb.collection('animais').update<AnimalRecord>(id, formData)
+    return recordToAnimal(updatedRecord)
+  } catch (err) {
+    console.error(`Erro ao atualizar animal ${id} no PocketBase:`, err)
+    throw err
+  }
+}
+
+/**
+ * Apaga o registro do animal na coleção 'animais' do Skip Cloud (PocketBase),
+ * deletando também o arquivo associado no storage.
+ */
+export async function apagarAnimal(id: string): Promise<boolean> {
+  try {
+    await pb.collection('animais').delete(id)
+    return true
+  } catch (err) {
+    console.error(`Erro ao apagar animal ${id} no PocketBase:`, err)
+    throw err
+  }
+}
+
 export async function criarAnimal(
   dados: Omit<AnimalCadastro, 'id' | 'createdAt'>,
 ): Promise<AnimalCadastro> {

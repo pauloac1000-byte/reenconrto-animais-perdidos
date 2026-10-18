@@ -1,12 +1,23 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { AnimalCadastro } from '@/types/animal'
-import { listarAnimais, criarAnimal, marcarAnimalComoReunido } from '@/services/animalService'
+import {
+  listarAnimais,
+  criarAnimal,
+  marcarAnimalComoReunido,
+  atualizarAnimal as atualizarAnimalService,
+  apagarAnimal as apagarAnimalService,
+} from '@/services/animalService'
 
 interface PetContextType {
   animais: AnimalCadastro[]
   isLoading: boolean
   error: string | null
   adicionarAnimal: (animal: Omit<AnimalCadastro, 'id' | 'createdAt'>) => Promise<AnimalCadastro>
+  editarAnimal: (
+    id: string,
+    dados: Partial<Omit<AnimalCadastro, 'id' | 'createdAt'>>,
+  ) => Promise<AnimalCadastro>
+  removerAnimal: (id: string) => Promise<void>
   recarregarAnimais: () => Promise<void>
   marcarReunido: (id: string) => Promise<AnimalCadastro>
   cadastroEmAndamento: AnimalCadastro | null
@@ -54,6 +65,20 @@ export const PetProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return atualizado
   }
 
+  const editarAnimal = async (
+    id: string,
+    dados: Partial<Omit<AnimalCadastro, 'id' | 'createdAt'>>,
+  ): Promise<AnimalCadastro> => {
+    const atualizado = await atualizarAnimalService(id, dados)
+    setAnimais((prev) => prev.map((a) => (a.id === id ? atualizado : a)))
+    return atualizado
+  }
+
+  const removerAnimal = async (id: string): Promise<void> => {
+    await apagarAnimalService(id)
+    setAnimais((prev) => prev.filter((a) => a.id !== id))
+  }
+
   return (
     <PetContext.Provider
       value={{
@@ -61,6 +86,8 @@ export const PetProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isLoading,
         error,
         adicionarAnimal,
+        editarAnimal,
+        removerAnimal,
         recarregarAnimais,
         marcarReunido,
         cadastroEmAndamento,

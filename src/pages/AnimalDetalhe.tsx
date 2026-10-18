@@ -17,17 +17,20 @@ import {
   Check,
   ShieldCheck,
   CheckCircle,
+  Edit3,
+  Trash2,
 } from 'lucide-react'
 import type { AnimalCadastro, AnimalCompativelItem } from '@/types/animal'
 import { usePets } from '@/context/PetContext'
 import { useAdminAuth } from '@/context/AdminAuthContext'
 import { buscarAnimalPorId, analisarCompatibilidadeAnimal } from '@/services/animalService'
 import { AnimalCompativelCard } from '@/components/AnimalCompativelCard'
+import { AnimalEditarModal } from '@/components/AnimalEditarModal'
 
 export default function AnimalDetalhe() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { animais, marcarReunido } = usePets()
+  const { animais, marcarReunido, editarAnimal, removerAnimal } = usePets()
   const { isAdmin } = useAdminAuth()
 
   const [animal, setAnimal] = useState<AnimalCadastro | null>(null)
@@ -37,6 +40,12 @@ export default function AnimalDetalhe() {
   const [copiado, setCopiado] = useState<boolean>(false)
   const [confirmandoReunido, setConfirmandoReunido] = useState<boolean>(false)
   const [salvandoReunido, setSalvandoReunido] = useState<boolean>(false)
+
+  // Funções administrativas: Edição e Exclusão
+  const [modalEditarAberto, setModalEditarAberto] = useState<boolean>(false)
+  const [confirmandoApagar, setConfirmandoApagar] = useState<boolean>(false)
+  const [apagando, setApagando] = useState<boolean>(false)
+  const [sucessoMensagem, setSucessoMensagem] = useState<string | null>(null)
 
   // Compatibilidade opcional calculada com IA (quando houver candidatos)
   const [carregandoCompat, setCarregandoCompat] = useState<boolean>(false)
@@ -222,6 +231,7 @@ export default function AnimalDetalhe() {
     if (!animal) return
     if (!confirmandoReunido) {
       setConfirmandoReunido(true)
+      setConfirmandoApagar(false)
       return
     }
 
@@ -230,12 +240,45 @@ export default function AnimalDetalhe() {
       const atualizado = await marcarReunido(animal.id)
       setAnimal(atualizado)
       setConfirmandoReunido(false)
+      setSucessoMensagem('Status atualizado para: Reunido com a família!')
+      setTimeout(() => setSucessoMensagem(null), 4000)
     } catch (err) {
       console.error('Erro ao marcar animal como reunido:', err)
       alert('Não foi possível marcar como reunido. Tente novamente.')
     } finally {
       setSalvandoReunido(false)
     }
+  }
+
+  const handleApagarCadastro = async () => {
+    if (!animal) return
+    if (!confirmandoApagar) {
+      setConfirmandoApagar(true)
+      setConfirmandoReunido(false)
+      return
+    }
+
+    try {
+      setApagando(true)
+      await removerAnimal(animal.id)
+      setConfirmandoApagar(false)
+      setSucessoMensagem('Cadastro removido com sucesso. Redirecionando para a lista de animais…')
+      // Redireciona para a lista após confirmação
+      setTimeout(() => {
+        navigate('/animais', { replace: true })
+      }, 1200)
+    } catch (err) {
+      console.error('Erro ao apagar cadastro do animal:', err)
+      alert('Não foi possível apagar o cadastro. Tente novamente.')
+      setApagando(false)
+    }
+  }
+
+  const handleAnimalSalvo = (animalAtualizado: AnimalCadastro) => {
+    setAnimal(animalAtualizado)
+    setImgError(false)
+    setSucessoMensagem('Cadastro atualizado com sucesso no banco!')
+    setTimeout(() => setSucessoMensagem(null), 4000)
   }
 
   // Mensagem pré-formatada para WhatsApp
@@ -279,67 +322,147 @@ export default function AnimalDetalhe() {
         </button>
       </div>
 
-      {/* Barra Administrativa de Ação Rápida (quando logado) */}
+      {/* Alerta de Feedback de Sucesso */}
+      {sucessoMensagem && (
+        <div className="bg-[#e8f5e9] border border-[#28a745]/40 rounded-[14px] p-3.5 flex items-center gap-2.5 text-[#28a745] animate-fade-in shadow-sm">
+          <CheckCircle className="w-5 h-5 shrink-0" />
+          <span className="text-xs sm:text-sm font-semibold">{sucessoMensagem}</span>
+        </div>
+      )}
+
+      {/* Barra Administrativa Completa (exclusiva para Admin logado) */}
       {isAdmin && (
-        <div className="bg-amber-50 border border-amber-300 rounded-[18px] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-5 h-5" />
+        <div className="bg-amber-50 border border-amber-300 rounded-[20px] p-4 sm:p-5 shadow-sm space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-200">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-amber-950">Painel do Administrador</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 font-bold text-[10px] uppercase">
+                    Admin
+                  </span>
+                </div>
+                <p className="text-xs text-amber-800">
+                  Ações de gestão exclusivas para este cadastro de animal.
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-amber-950">Painel do Administrador</h2>
-              <p className="text-xs text-amber-800">
-                {isReunido
-                  ? 'Este animal já está com status: REUNIDO COM A FAMÍLIA.'
-                  : 'Você pode alterar o status deste animal com apenas um clique.'}
-              </p>
-            </div>
+
+            {isReunido && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-200 text-amber-950 text-xs font-bold">
+                <CheckCircle className="w-3.5 h-3.5 text-amber-800" />
+                <span>Status: Reunido com a família</span>
+              </div>
+            )}
           </div>
 
-          {!isReunido ? (
-            <div className="w-full sm:w-auto flex items-center gap-2">
-              {!confirmandoReunido ? (
+          {/* Botões de Ações do Administrador */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Botão 1: Editar Cadastro */}
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmandoApagar(false)
+                  setConfirmandoReunido(false)
+                  setModalEditarAberto(true)
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[10px] bg-[#2d8f6f] hover:bg-[#237a5e] text-white font-bold text-xs shadow-sm hover:shadow transition-all"
+                title="Editar qualquer informação deste cadastro, incluindo a foto"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Editar cadastro</span>
+              </button>
+
+              {/* Botão 2: Marcar como Reunido (se ainda não for) */}
+              {!isReunido && (
+                <>
+                  {!confirmandoReunido ? (
+                    <button
+                      type="button"
+                      onClick={handleMarcarComoReunido}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition-all"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Marcar como reunido com a família</span>
+                    </button>
+                  ) : (
+                    <div className="inline-flex items-center gap-2 bg-white border border-amber-300 rounded-[10px] p-1 px-2.5">
+                      <span className="text-xs font-semibold text-amber-950">
+                        Marcar como reunido?
+                      </span>
+                      <button
+                        type="button"
+                        disabled={salvandoReunido}
+                        onClick={handleMarcarComoReunido}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs transition-colors disabled:opacity-50"
+                      >
+                        {salvandoReunido ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Check className="w-3 h-3" />
+                        )}
+                        <span>Sim</span>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={salvandoReunido}
+                        onClick={() => setConfirmandoReunido(false)}
+                        className="px-2 py-1 rounded-md bg-[#faf7f2] border border-[#e5e0d8] text-amber-950 font-semibold text-xs hover:bg-[#f2ede4] transition-colors disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Botão 3: Apagar Cadastro (com confirmação segura) */}
+            <div>
+              {!confirmandoApagar ? (
                 <button
                   type="button"
-                  onClick={handleMarcarComoReunido}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[10px] bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition-all"
+                  onClick={handleApagarCadastro}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] bg-white border border-red-300 text-[#d9534f] hover:bg-red-50 hover:border-red-400 font-bold text-xs transition-all"
+                  title="Apagar este cadastro do banco de dados permanentemente"
                 >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Marcar como reunido com a família</span>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Apagar cadastro</span>
                 </button>
               ) : (
-                <div className="w-full sm:w-auto flex items-center gap-2">
-                  <span className="text-xs font-semibold text-amber-950">Confirmar alteração?</span>
+                <div className="inline-flex items-center gap-2 bg-red-50 border border-red-300 rounded-[10px] p-1.5 px-3">
+                  <span className="text-xs font-bold text-red-900">
+                    Tem certeza que deseja apagar?
+                  </span>
                   <button
                     type="button"
-                    disabled={salvandoReunido}
-                    onClick={handleMarcarComoReunido}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition-colors disabled:opacity-50"
+                    disabled={apagando}
+                    onClick={handleApagarCadastro}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-[#d9534f] hover:bg-red-700 text-white font-bold text-xs shadow-2xs transition-colors disabled:opacity-50"
                   >
-                    {salvandoReunido ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    {apagando ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
                     ) : (
-                      <Check className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3 h-3" />
                     )}
-                    <span>Sim, confirmar</span>
+                    <span>Sim, apagar</span>
                   </button>
                   <button
                     type="button"
-                    disabled={salvandoReunido}
-                    onClick={() => setConfirmandoReunido(false)}
-                    className="px-3 py-2 rounded-[10px] bg-white border border-amber-300 text-amber-950 font-semibold text-xs hover:bg-amber-100 transition-colors disabled:opacity-50"
+                    disabled={apagando}
+                    onClick={() => setConfirmandoApagar(false)}
+                    className="px-2 py-1 rounded-md bg-white border border-[#e5e0d8] text-[#2b2b2b] font-semibold text-xs hover:bg-[#faf7f2] transition-colors disabled:opacity-50"
                   >
                     Cancelar
                   </button>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-200/80 text-amber-950 text-xs font-bold">
-              <CheckCircle className="w-4 h-4 text-amber-800" />
-              <span>Status Atual: Reunido com a família</span>
-            </div>
-          )}
+          </div>
         </div>
       )}
 
@@ -666,6 +789,17 @@ export default function AnimalDetalhe() {
           <span>Cadastrar outro animal</span>
         </Link>
       </div>
+
+      {/* Modal de Edição Completa para Administrador */}
+      {isAdmin && animal && (
+        <AnimalEditarModal
+          animal={animal}
+          isOpen={modalEditarAberto}
+          onClose={() => setModalEditarAberto(false)}
+          onSalvo={handleAnimalSalvo}
+          onSalvarDados={editarAnimal}
+        />
+      )}
     </div>
   )
 }

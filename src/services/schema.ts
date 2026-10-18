@@ -36,6 +36,8 @@ export interface AnimalRecord {
   descricao?: string
   telefone?: string
   whatsapp?: string
+  nome_pessoa?: string
+  nome_pet?: string
   created: string
   updated: string
   collectionId: string
@@ -62,6 +64,8 @@ export function recordToAnimal(record: AnimalRecord): AnimalCadastro {
     descricao: record.descricao || undefined,
     telefone: record.telefone || undefined,
     whatsapp: record.whatsapp || undefined,
+    nomePessoa: record.nome_pessoa || undefined,
+    nomePet: record.nome_pet || undefined,
     createdAt: record.created,
   }
 }

@@ -16,6 +16,8 @@ import {
   Calendar as CalendarIcon,
   CheckCircle2,
   Trash2,
+  User,
+  Heart,
 } from 'lucide-react'
 import type {
   AnimalCadastro,
@@ -86,6 +88,8 @@ export default function Cadastro() {
   const [data, setData] = useState<string>(
     dadosIniciaisState?.data || new Date().toISOString().split('T')[0],
   )
+  const [nomePessoa, setNomePessoa] = useState<string>(dadosIniciaisState?.nomePessoa || '')
+  const [nomePet, setNomePet] = useState<string>(dadosIniciaisState?.nomePet || '')
   const [caracteristicas, setCaracteristicas] = useState<string>(
     dadosIniciaisState?.caracteristicas || '',
   )
@@ -223,6 +227,8 @@ export default function Cadastro() {
       cidade: cidade.trim(),
       bairro: bairro.trim(),
       data,
+      nomePessoa: nomePessoa.trim() || undefined,
+      nomePet: nomePet.trim() || undefined,
       caracteristicas: caracteristicas.trim() || undefined,
       descricao: descricao.trim() || undefined,
       telefone: telefone.trim() || undefined,
@@ -581,6 +587,69 @@ export default function Cadastro() {
               <span>{errors.data}</span>
             </div>
           )}
+        </div>
+
+        {/* Campos Opcionais: Nome da pessoa e Nome do pet */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#e5e0d8]">
+          {/* Nome da Pessoa */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="nome-pessoa-input"
+                className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+              >
+                Nome da pessoa
+              </label>
+              <span className="text-xs text-[#6b6b6b]">Opcional</span>
+            </div>
+            <div className="relative">
+              <User className="w-4 h-4 text-[#6b6b6b] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                id="nome-pessoa-input"
+                type="text"
+                placeholder={
+                  tipo === 'perdido'
+                    ? 'Quem perdeu o animal (ex.: Maria Silva)'
+                    : 'Quem encontrou o animal (ex.: Carlos Souza)'
+                }
+                value={nomePessoa}
+                onChange={(e) => setNomePessoa(e.target.value)}
+                className="w-full h-11 pl-10 pr-3.5 bg-white rounded-xl border border-[#e5e0d8] text-sm text-[#2b2b2b] placeholder:text-[#6b6b6b]/60 focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all"
+              />
+            </div>
+            <p className="text-[11px] text-[#6b6b6b]">
+              {tipo === 'perdido'
+                ? 'Tutor ou responsável que procura pelo pet.'
+                : 'Pessoa que encontrou e está cuidando ou avisando.'}
+            </p>
+          </div>
+
+          {/* Nome do Pet */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="nome-pet-input"
+                className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+              >
+                Nome do pet
+              </label>
+              <span className="text-xs text-[#6b6b6b]">Opcional</span>
+            </div>
+            <div className="relative">
+              <Heart className="w-4 h-4 text-[#f49b4f] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                id="nome-pet-input"
+                type="text"
+                placeholder="Nome pelo qual o animal atende (ex.: Bob, Mel)"
+                value={nomePet}
+                onChange={(e) => setNomePet(e.target.value)}
+                className="w-full h-11 pl-10 pr-3.5 bg-white rounded-xl border border-[#e5e0d8] text-sm text-[#2b2b2b] placeholder:text-[#6b6b6b]/60 focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all"
+              />
+            </div>
+            <p className="text-[11px] text-[#6b6b6b]">
+              Nome pelo qual ele é chamado ou reconhece ao ser chamado.
+            </p>
+          </div>
         </div>
 
         {/* 7. Características marcantes (Opcional) */}

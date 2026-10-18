@@ -66,6 +66,12 @@ export async function criarAnimal(
     if (dados.whatsapp) {
       formData.append('whatsapp', dados.whatsapp)
     }
+    if (dados.nomePessoa) {
+      formData.append('nome_pessoa', dados.nomePessoa)
+    }
+    if (dados.nomePet) {
+      formData.append('nome_pet', dados.nomePet)
+    }
 
     // Processamento da foto: se tiver File anexado, usa diretamente;
     // se tiver fotoUrl como data URL base64, converte para File

@@ -21,6 +21,8 @@ export interface AnimalCadastro {
   descricao?: string
   telefone?: string
   whatsapp?: string
+  nomePessoa?: string
+  nomePet?: string
   createdAt?: string
 }
 

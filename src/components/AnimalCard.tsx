@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import type { AnimalCadastro } from '@/types/animal'
-import { MapPin, Calendar, Phone, MessageSquare, PawPrint } from 'lucide-react'
+import { MapPin, Calendar, Phone, MessageSquare, PawPrint, Heart, User } from 'lucide-react'
 
 interface AnimalCardProps {
   animal: AnimalCadastro
@@ -62,6 +62,30 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
             {animal.especie}
           </span>
         </div>
+
+        {/* Sobreposição na parte inferior da foto: Nome do pet e Nome da pessoa (quando existirem) */}
+        {(animal.nomePet || animal.nomePessoa) && (
+          <div className="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent flex flex-wrap items-center gap-1.5 pointer-events-none">
+            {animal.nomePet && (
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#f49b4f] text-white shadow-sm max-w-full truncate"
+                title={`Nome do pet: ${animal.nomePet}`}
+              >
+                <Heart className="w-3 h-3 shrink-0 fill-current" />
+                <span className="truncate">{animal.nomePet}</span>
+              </span>
+            )}
+            {animal.nomePessoa && (
+              <span
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-black/55 backdrop-blur-md text-white border border-white/20 shadow-sm max-w-full truncate"
+                title={`${isPerdido ? 'Quem perdeu' : 'Quem encontrou'}: ${animal.nomePessoa}`}
+              >
+                <User className="w-3 h-3 shrink-0" />
+                <span className="truncate">{animal.nomePessoa}</span>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Conteúdo do Card */}

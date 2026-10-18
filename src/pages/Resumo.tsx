@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
+  User,
+  Heart,
 } from 'lucide-react'
 import type { AnimalCadastro, AnaliseCompatibilidadeResultado } from '@/types/animal'
 import { usePets } from '@/context/PetContext'
@@ -96,6 +98,8 @@ export default function Resumo() {
         descricao: animal.descricao,
         telefone: animal.telefone,
         whatsapp: animal.whatsapp,
+        nomePessoa: animal.nomePessoa,
+        nomePet: animal.nomePet,
       })
 
       setAnimalPublicado(animalCriado)
@@ -322,9 +326,14 @@ export default function Resumo() {
           </div>
 
           <h2 className="text-xl sm:text-2xl font-bold text-[#2b2b2b] mt-4">
-            {animal.especie} • Porte {animal.porte}
+            {animal.nomePet
+              ? `${animal.nomePet} (${animal.especie})`
+              : `${animal.especie} • Porte ${animal.porte}`}
           </h2>
           <p className="text-sm text-[#6b6b6b] mt-0.5">
+            {animal.nomePet && (
+              <span className="font-medium text-[#2b2b2b]">Porte {animal.porte} • </span>
+            )}
             {animal.bairro}, {animal.cidade}
           </p>
         </div>
@@ -332,6 +341,32 @@ export default function Resumo() {
         {/* Grade com todas as informações */}
         <div className="p-6 sm:p-8 space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {/* Nome do Pet (quando preenchido) */}
+            {animal.nomePet && (
+              <div className="p-3.5 rounded-xl bg-[#faf7f2] border border-[#e5e0d8]/80">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b6b6b] block flex items-center gap-1">
+                  <Heart className="w-3.5 h-3.5 text-[#f49b4f]" />
+                  Nome do pet
+                </span>
+                <span className="text-sm font-semibold text-[#2b2b2b] mt-0.5 block">
+                  {animal.nomePet}
+                </span>
+              </div>
+            )}
+
+            {/* Nome da Pessoa (quando preenchido) */}
+            {animal.nomePessoa && (
+              <div className="p-3.5 rounded-xl bg-[#faf7f2] border border-[#e5e0d8]/80">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b6b6b] block flex items-center gap-1">
+                  <User className="w-3.5 h-3.5 text-[#2d8f6f]" />
+                  {isPerdido ? 'Quem perdeu' : 'Quem encontrou'}
+                </span>
+                <span className="text-sm font-semibold text-[#2b2b2b] mt-0.5 block">
+                  {animal.nomePessoa}
+                </span>
+              </div>
+            )}
+
             {/* Espécie */}
             <div className="p-3.5 rounded-xl bg-[#faf7f2] border border-[#e5e0d8]/80">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b6b6b] block">

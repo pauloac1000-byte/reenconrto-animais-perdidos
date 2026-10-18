@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-18T20:09:46.579Z",
+  "generatedAt": "2026-10-18T23:05:41.766Z",
   "collections": [
     {
       "name": "users",
@@ -143,6 +143,18 @@
           "required": false,
           "system": false,
           "autodateTriggers": ["onCreate", "onUpdate"]
+        },
+        {
+          "name": "nome_pessoa",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "nome_pet",
+          "type": "text",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [

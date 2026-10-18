@@ -4,33 +4,38 @@ import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { PetProvider } from '@/context/PetContext'
+import { AdminAuthProvider } from '@/context/AdminAuthContext'
 import Index from './pages/Index'
 import Cadastro from './pages/Cadastro'
 import Resumo from './pages/Resumo'
 import Animais from './pages/Animais'
 import AnimalDetalhe from './pages/AnimalDetalhe'
+import AdminLogin from './pages/AdminLogin'
 import NotFound from './pages/NotFound'
 import Layout from './components/Layout'
 
 const App = () => (
-  <PetProvider>
-    <BrowserRouter>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/cadastro" element={<Cadastro />} />
-            <Route path="/resumo" element={<Resumo />} />
-            <Route path="/animais" element={<Animais />} />
-            <Route path="/animal/:id" element={<AnimalDetalhe />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TooltipProvider>
-    </BrowserRouter>
-  </PetProvider>
+  <AdminAuthProvider>
+    <PetProvider>
+      <BrowserRouter>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/cadastro" element={<Cadastro />} />
+              <Route path="/resumo" element={<Resumo />} />
+              <Route path="/animais" element={<Animais />} />
+              <Route path="/animal/:id" element={<AnimalDetalhe />} />
+              <Route path="/admin" element={<AdminLogin />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </BrowserRouter>
+    </PetProvider>
+  </AdminAuthProvider>
 )
 
 export default App

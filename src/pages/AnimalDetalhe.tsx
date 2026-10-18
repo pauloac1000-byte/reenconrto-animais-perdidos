@@ -15,22 +15,28 @@ import {
   HelpCircle,
   Share2,
   Check,
+  ShieldCheck,
+  CheckCircle,
 } from 'lucide-react'
 import type { AnimalCadastro, AnimalCompativelItem } from '@/types/animal'
 import { usePets } from '@/context/PetContext'
+import { useAdminAuth } from '@/context/AdminAuthContext'
 import { buscarAnimalPorId, analisarCompatibilidadeAnimal } from '@/services/animalService'
 import { AnimalCompativelCard } from '@/components/AnimalCompativelCard'
 
 export default function AnimalDetalhe() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { animais } = usePets()
+  const { animais, marcarReunido } = usePets()
+  const { isAdmin } = useAdminAuth()
 
   const [animal, setAnimal] = useState<AnimalCadastro | null>(null)
   const [carregando, setCarregando] = useState<boolean>(true)
   const [erro, setErro] = useState<string | null>(null)
   const [imgError, setImgError] = useState<boolean>(false)
   const [copiado, setCopiado] = useState<boolean>(false)
+  const [confirmandoReunido, setConfirmandoReunido] = useState<boolean>(false)
+  const [salvandoReunido, setSalvandoReunido] = useState<boolean>(false)
 
   // Compatibilidade opcional calculada com IA (quando houver candidatos)
   const [carregandoCompat, setCarregandoCompat] = useState<boolean>(false)
@@ -210,12 +216,33 @@ export default function AnimalDetalhe() {
   }
 
   const isPerdido = animal.tipo === 'perdido'
+  const isReunido = animal.tipo === 'reunido'
+
+  const handleMarcarComoReunido = async () => {
+    if (!animal) return
+    if (!confirmandoReunido) {
+      setConfirmandoReunido(true)
+      return
+    }
+
+    try {
+      setSalvandoReunido(true)
+      const atualizado = await marcarReunido(animal.id)
+      setAnimal(atualizado)
+      setConfirmandoReunido(false)
+    } catch (err) {
+      console.error('Erro ao marcar animal como reunido:', err)
+      alert('Não foi possível marcar como reunido. Tente novamente.')
+    } finally {
+      setSalvandoReunido(false)
+    }
+  }
 
   // Mensagem pré-formatada para WhatsApp
   const mensagemWhatsApp = encodeURIComponent(
     isPerdido
       ? `Olá! Vi o cadastro do pet ${animal.nomePet || animal.especie} (${animal.bairro}, ${animal.cidade}) no site Reencontro e gostaria de informações!`
-      : `Olá! Vi o animal encontrado (${animal.especie}, ${animal.bairro}, ${animal.cidade}) no site Reencontro e gostaria de falar com você!`,
+      : `Olá! Vi o animal cadastrado em busca do dono (${animal.especie}, ${animal.bairro}, ${animal.cidade}) no site Reencontro e gostaria de falar com você!`,
   )
 
   const temContatos = Boolean(animal.whatsapp || animal.telefone)
@@ -252,6 +279,70 @@ export default function AnimalDetalhe() {
         </button>
       </div>
 
+      {/* Barra Administrativa de Ação Rápida (quando logado) */}
+      {isAdmin && (
+        <div className="bg-amber-50 border border-amber-300 rounded-[18px] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-amber-950">Painel do Administrador</h2>
+              <p className="text-xs text-amber-800">
+                {isReunido
+                  ? 'Este animal já está com status: REUNIDO COM A FAMÍLIA.'
+                  : 'Você pode alterar o status deste animal com apenas um clique.'}
+              </p>
+            </div>
+          </div>
+
+          {!isReunido ? (
+            <div className="w-full sm:w-auto flex items-center gap-2">
+              {!confirmandoReunido ? (
+                <button
+                  type="button"
+                  onClick={handleMarcarComoReunido}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[10px] bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition-all"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Marcar como reunido com a família</span>
+                </button>
+              ) : (
+                <div className="w-full sm:w-auto flex items-center gap-2">
+                  <span className="text-xs font-semibold text-amber-950">Confirmar alteração?</span>
+                  <button
+                    type="button"
+                    disabled={salvandoReunido}
+                    onClick={handleMarcarComoReunido}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-[10px] bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm transition-colors disabled:opacity-50"
+                  >
+                    {salvandoReunido ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Check className="w-3.5 h-3.5" />
+                    )}
+                    <span>Sim, confirmar</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={salvandoReunido}
+                    onClick={() => setConfirmandoReunido(false)}
+                    className="px-3 py-2 rounded-[10px] bg-white border border-amber-300 text-amber-950 font-semibold text-xs hover:bg-amber-100 transition-colors disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-200/80 text-amber-950 text-xs font-bold">
+              <CheckCircle className="w-4 h-4 text-amber-800" />
+              <span>Status Atual: Reunido com a família</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Cartão Principal do Animal */}
       <article className="bg-white rounded-[24px] border border-[#e5e0d8] shadow-[0_6px_24px_rgba(0,0,0,0.05)] overflow-hidden">
         {/* Foto Ampliada no Topo (destaque grande) */}
@@ -259,7 +350,7 @@ export default function AnimalDetalhe() {
           {!imgError && animal.fotoUrl ? (
             <img
               src={animal.fotoUrl}
-              alt={`${animal.especie} - ${isPerdido ? 'Perdido' : 'Encontrado'}`}
+              alt={`${animal.especie} - ${animal.tipo === 'reunido' ? 'Reunido com a família' : isPerdido ? 'Perdido' : 'Procura-se o dono'}`}
               onError={() => setImgError(true)}
               className="w-full h-full object-cover object-center"
             />
@@ -272,14 +363,18 @@ export default function AnimalDetalhe() {
 
           {/* Badges no topo sobre a foto */}
           <div className="absolute top-4 left-4 flex flex-wrap items-center gap-2">
-            {/* Situação: perdido/encontrado */}
-            {isPerdido ? (
+            {/* Situação: perdido / procura-se o dono / reunido */}
+            {animal.tipo === 'reunido' ? (
+              <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-600 shadow-lg">
+                Reunido com a família
+              </span>
+            ) : isPerdido ? (
               <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider bg-[#fdecea] text-[#d9534f] border border-[#d9534f]/30 shadow-md">
                 Animal Perdido
               </span>
             ) : (
               <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wider bg-[#e8f5e9] text-[#28a745] border border-[#28a745]/30 shadow-md">
-                Animal Encontrado
+                Procura-se o dono
               </span>
             )}
           </div>
@@ -303,7 +398,7 @@ export default function AnimalDetalhe() {
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs sm:text-sm font-medium bg-black/60 backdrop-blur-md text-white border border-white/20 shadow-md">
                   <User className="w-3.5 h-3.5 shrink-0" />
                   <span>
-                    {isPerdido ? 'Tutor(a)' : 'Quem encontrou'}: {animal.nomePessoa}
+                    {isPerdido ? 'Tutor(a)' : 'Quem acolheu'}: {animal.nomePessoa}
                   </span>
                 </span>
               )}
@@ -357,7 +452,7 @@ export default function AnimalDetalhe() {
                   </div>
                   <div>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-[#2d8f6f] block">
-                      {isPerdido ? 'Nome do Tutor / Responsável' : 'Quem encontrou o pet'}
+                      {isPerdido ? 'Nome do Tutor / Responsável' : 'Quem acolheu o pet'}
                     </span>
                     <span className="text-base font-bold text-[#2b2b2b]">{animal.nomePessoa}</span>
                   </div>
@@ -407,7 +502,7 @@ export default function AnimalDetalhe() {
               <div className="p-3.5 rounded-xl bg-[#faf7f2] border border-[#e5e0d8]">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b6b6b] block flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5 text-[#6b6b6b]" />
-                  {isPerdido ? 'Visto em' : 'Encontrado em'}
+                  {isPerdido ? 'Visto em' : 'Data do resgate'}
                 </span>
                 <span className="text-sm sm:text-base font-semibold text-[#2b2b2b] mt-0.5 block">
                   {formatarData(animal.data)}
@@ -469,9 +564,11 @@ export default function AnimalDetalhe() {
                 Formas de contato
               </span>
               <h3 className="text-base sm:text-lg font-bold text-[#2b2b2b] mt-0.5">
-                {isPerdido
-                  ? 'Tem informações sobre este animal? Entre em contato:'
-                  : 'Este animal é seu ou você conhece o tutor? Entre em contato:'}
+                {animal.tipo === 'reunido'
+                  ? 'Histórico de contato deste pet já reunido:'
+                  : isPerdido
+                    ? 'Tem informações sobre este animal? Entre em contato:'
+                    : 'Este animal é seu ou você conhece o tutor? Entre em contato:'}
               </h3>
             </div>
 
@@ -526,7 +623,7 @@ export default function AnimalDetalhe() {
               </div>
               <h2 className="text-lg sm:text-xl font-bold text-[#2b2b2b]">
                 {isPerdido
-                  ? 'Animais achados compatíveis com este pet'
+                  ? 'Animais em busca do dono compatíveis com este pet'
                   : 'Animais perdidos compatíveis com o encontrado'}
               </h2>
               <p className="text-xs text-[#6b6b6b]">

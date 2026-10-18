@@ -60,6 +60,21 @@ export async function listarAnimais(): Promise<AnimalCadastro[]> {
  * Salva um novo cadastro real de animal na coleção 'animais' do Skip Cloud (PocketBase)
  * suportando upload real do arquivo de imagem (FormData).
  */
+/**
+ * Atualiza o status/tipo de um animal para 'reunido' na coleção 'animais'
+ */
+export async function marcarAnimalComoReunido(id: string): Promise<AnimalCadastro> {
+  try {
+    const updatedRecord = await pb.collection('animais').update<AnimalRecord>(id, {
+      tipo: 'reunido',
+    })
+    return recordToAnimal(updatedRecord)
+  } catch (err) {
+    console.error(`Erro ao marcar animal ${id} como reunido:`, err)
+    throw err
+  }
+}
+
 export async function criarAnimal(
   dados: Omit<AnimalCadastro, 'id' | 'createdAt'>,
 ): Promise<AnimalCadastro> {

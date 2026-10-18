@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-18T23:10:41.834Z",
+  "generatedAt": "2026-10-18T23:26:30.782Z",
   "collections": [
     {
       "name": "users",
@@ -60,7 +60,7 @@
           "type": "select",
           "required": true,
           "system": false,
-          "selectValues": ["perdido", "encontrado"]
+          "selectValues": ["perdido", "encontrado", "reunido"]
         },
         {
           "name": "foto",
@@ -160,6 +160,29 @@
       "indexes": [
         "CREATE INDEX idx_animais_created ON animais (created DESC)",
         "CREATE INDEX idx_animais_tipo ON animais (tipo)"
+      ]
+    },
+    {
+      "name": "admins",
+      "type": "auth",
+      "apiRules": {
+        "list": "id = @request.auth.id",
+        "view": "id = @request.auth.id",
+        "create": null,
+        "update": "id = @request.auth.id",
+        "delete": null
+      },
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "required": false,
+          "system": false
+        }
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX `idx_tokenKey_pbc_3841632486` ON `admins` (`tokenKey`)",
+        "CREATE UNIQUE INDEX `idx_email_pbc_3841632486` ON `admins` (`email`) WHERE `email` != ''"
       ]
     }
   ]

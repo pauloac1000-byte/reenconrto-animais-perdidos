@@ -9,11 +9,15 @@ import {
   Instagram,
   Facebook,
   MessageCircle,
+  ShieldCheck,
+  LogOut,
 } from 'lucide-react'
+import { useAdminAuth } from '@/context/AdminAuthContext'
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const location = useLocation()
+  const { admin, isAdmin, logout } = useAdminAuth()
 
   // Fecha o menu mobile ao trocar de rota
   React.useEffect(() => {
@@ -60,8 +64,27 @@ export default function Layout() {
             </NavLink>
           </nav>
 
-          {/* Botão Primário - Desktop */}
+          {/* Botão Primário e Indicador Admin - Desktop */}
           <div className="hidden md:flex items-center gap-3">
+            {isAdmin && (
+              <div className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full bg-amber-50 border border-amber-300 text-xs shadow-2xs">
+                <span className="inline-flex items-center gap-1 font-bold text-amber-800">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Admin</span>
+                </span>
+                <span className="text-amber-400">•</span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium text-amber-900 hover:bg-amber-100 hover:text-red-700 transition-colors"
+                  title={`Conectado como ${admin?.email}. Clique para sair.`}
+                >
+                  <LogOut className="w-3 h-3" />
+                  <span>Sair</span>
+                </button>
+              </div>
+            )}
+
             <Link
               to="/cadastro"
               className="inline-flex items-center gap-2 bg-[#2d8f6f] hover:bg-[#237a5e] text-white text-[15px] font-semibold px-5 py-2.5 rounded-[10px] shadow-sm hover:shadow transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
@@ -73,6 +96,12 @@ export default function Layout() {
 
           {/* Menu Hambúrguer - Mobile */}
           <div className="flex md:hidden items-center gap-2">
+            {isAdmin && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-300 text-xs font-bold text-amber-800">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                <span>Admin</span>
+              </span>
+            )}
             <button
               type="button"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
@@ -87,6 +116,25 @@ export default function Layout() {
         {/* Menu Colapsável Mobile */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-[#e5e0d8] bg-white px-4 py-4 space-y-3 animate-fade-in-down shadow-lg">
+            {isAdmin && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                  <ShieldCheck className="w-4 h-4 text-amber-600" />
+                  <span>Admin ({admin?.email})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout()
+                    setMobileMenuOpen(false)
+                  }}
+                  className="text-red-700 font-semibold flex items-center gap-1 hover:underline"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sair</span>
+                </button>
+              </div>
+            )}
             <Link
               to="/animais"
               onClick={() => setMobileMenuOpen(false)}

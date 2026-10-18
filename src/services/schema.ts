@@ -24,7 +24,7 @@ import pb from '@/lib/pocketbase/client'
 
 export interface AnimalRecord {
   id: string
-  tipo: 'perdido' | 'encontrado'
+  tipo: 'perdido' | 'encontrado' | 'reunido'
   foto?: string
   especie: string
   porte: string

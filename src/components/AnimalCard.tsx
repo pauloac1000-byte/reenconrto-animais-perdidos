@@ -10,16 +10,53 @@ import {
   Heart,
   User,
   ChevronRight,
+  ShieldCheck,
+  Check,
+  Loader2,
 } from 'lucide-react'
+import { useAdminAuth } from '@/context/AdminAuthContext'
+import { usePets } from '@/context/PetContext'
 
 interface AnimalCardProps {
   animal: AnimalCadastro
 }
 
 export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
+  const { isAdmin } = useAdminAuth()
+  const { marcarReunido } = usePets()
+
   const [imgError, setImgError] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
+  const [salvandoStatus, setSalvandoStatus] = useState(false)
 
   const isPerdido = animal.tipo === 'perdido'
+  const isReunido = animal.tipo === 'reunido'
+
+  const handleMarcarReunido = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!confirmando) {
+      setConfirmando(true)
+      return
+    }
+
+    try {
+      setSalvandoStatus(true)
+      await marcarReunido(animal.id)
+      setConfirmando(false)
+    } catch (err) {
+      console.error('Erro ao atualizar status para reunido:', err)
+      alert('Não foi possível atualizar o status. Tente novamente.')
+    } finally {
+      setSalvandoStatus(false)
+    }
+  }
+
+  const handleCancelarConfirmacao = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setConfirmando(false)
+  }
 
   // Formata data brasileira (ex: 12/05/2025)
   const formatarData = (dataStr: string) => {
@@ -48,7 +85,7 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
         {!imgError && animal.fotoUrl ? (
           <img
             src={animal.fotoUrl}
-            alt={`${animal.especie} - ${isPerdido ? 'Perdido' : 'Encontrado'}`}
+            alt={`${animal.especie} - ${animal.tipo === 'reunido' ? 'Reunido com a família' : isPerdido ? 'Perdido' : 'Procura-se o dono'}`}
             onError={() => setImgError(true)}
             className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
@@ -60,15 +97,19 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
           </div>
         )}
 
-        {/* Badge do Tipo (Perdido / Encontrado) */}
+        {/* Badge do Tipo (Perdido / Procura-se o dono / Reunido) */}
         <div className="absolute top-3 left-3">
-          {isPerdido ? (
+          {animal.tipo === 'reunido' ? (
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-600 shadow-md">
+              Reunido com a família
+            </span>
+          ) : isPerdido ? (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#fdecea] text-[#d9534f] border border-[#d9534f]/30 shadow-sm">
               Perdido
             </span>
           ) : (
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#e8f5e9] text-[#28a745] border border-[#28a745]/30 shadow-sm">
-              Encontrado
+              Procura-se o dono
             </span>
           )}
         </div>
@@ -95,7 +136,7 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
             {animal.nomePessoa && (
               <span
                 className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-black/55 backdrop-blur-md text-white border border-white/20 shadow-sm max-w-full truncate"
-                title={`${isPerdido ? 'Quem perdeu' : 'Quem encontrou'}: ${animal.nomePessoa}`}
+                title={`${isPerdido ? 'Quem perdeu' : 'Quem acolheu'}: ${animal.nomePessoa}`}
               >
                 <User className="w-3 h-3 shrink-0" />
                 <span className="truncate">{animal.nomePessoa}</span>
@@ -127,7 +168,7 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
           <div className="flex items-center gap-1.5 text-xs text-[#6b6b6b]">
             <Calendar className="w-3.5 h-3.5 text-[#6b6b6b]" />
             <span>
-              {isPerdido ? 'Visto pela última vez:' : 'Encontrado em:'}{' '}
+              {isPerdido ? 'Visto pela última vez:' : 'Data do resgate:'}{' '}
               <strong className="text-[#2b2b2b]">{formatarData(animal.data)}</strong>
             </span>
           </div>
@@ -174,6 +215,52 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
             )}
           </div>
         </div>
+
+        {/* Botão administrativo para marcar como reunido com a família (apenas para Admin logado) */}
+        {isAdmin && !isReunido && (
+          <div className="relative z-20 -mx-4 sm:-mx-5 border-t border-amber-200 bg-amber-50/90 px-3 py-2 flex items-center justify-between gap-2">
+            {!confirmando ? (
+              <button
+                type="button"
+                onClick={handleMarcarReunido}
+                className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-2xs transition-colors"
+                title="Admin: Atualizar o status do animal para Reunido com a família"
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Marcar como reunido com a família</span>
+              </button>
+            ) : (
+              <div className="w-full flex items-center justify-between gap-2 text-xs">
+                <span className="font-semibold text-amber-900 truncate">
+                  Confirmar status reunido?
+                </span>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    disabled={salvandoStatus}
+                    onClick={handleMarcarReunido}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs transition-colors disabled:opacity-50"
+                  >
+                    {salvandoStatus ? (
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                    ) : (
+                      <Check className="w-3 h-3" />
+                    )}
+                    <span>Sim</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={salvandoStatus}
+                    onClick={handleCancelarConfirmacao}
+                    className="px-2 py-1 rounded-md bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 font-semibold text-xs transition-colors disabled:opacity-50"
+                  >
+                    Não
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </article>
   )

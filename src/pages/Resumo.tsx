@@ -161,12 +161,12 @@ export default function Resumo() {
           <h1 className="text-2xl sm:text-3xl font-bold text-[#2b2b2b]">
             {isPerdidoPublicado
               ? 'Seu pet foi cadastrado e já está no mural público!'
-              : 'O animal encontrado foi cadastrado com sucesso!'}
+              : 'O animal em busca do dono foi cadastrado com sucesso!'}
           </h1>
           <p className="text-sm text-[#6b6b6b] max-w-xl mx-auto leading-relaxed">
             {isPerdidoPublicado
-              ? 'Nossa Inteligência Artificial já analisou os animais encontrados no banco cruzando fotos, características e localização para você.'
-              : 'Nossa Inteligência Artificial já analisou os animais perdidos no banco cruzando fotos, características e localização com o pet que você achou.'}
+              ? 'Nossa Inteligência Artificial já analisou os animais cadastrados como procura-se o dono no banco cruzando fotos, características e localização para você.'
+              : 'Nossa Inteligência Artificial já analisou os animais perdidos no banco cruzando fotos, características e localização com o pet acolhido.'}
           </p>
         </div>
 
@@ -180,8 +180,8 @@ export default function Resumo() {
               </div>
               <h2 className="text-xl font-bold text-[#2b2b2b]">
                 {isPerdidoPublicado
-                  ? 'Animais achados compatíveis com o seu'
-                  : 'Animais perdidos compatíveis com o encontrado'}
+                  ? 'Animais em busca do dono compatíveis com o seu'
+                  : 'Animais perdidos compatíveis com o pet acolhido'}
               </h2>
               <p className="text-xs text-[#6b6b6b]">
                 Cruzamento inteligente de <strong>foto</strong>, <strong>características</strong> e{' '}
@@ -228,12 +228,12 @@ export default function Resumo() {
               </div>
               <div className="space-y-2">
                 <h3 className="text-lg font-bold text-[#2b2b2b]">
-                  Nenhum animal compatível encontrado por enquanto
+                  Nenhum animal compatível localizado por enquanto
                 </h3>
                 <p className="text-xs sm:text-sm text-[#6b6b6b] leading-relaxed max-w-md mx-auto">
                   {resultadoCompatibilidade.totalCandidatos === 0
-                    ? `Ainda não existem animais ${isPerdidoPublicado ? 'encontrados' : 'perdidos'} cadastrados no sistema. Seu cadastro já está público na lista para que outras pessoas vejam!`
-                    : `Analisamos os animais ${isPerdidoPublicado ? 'encontrados' : 'perdidos'} existentes, mas nenhum apresentou semelhança suficiente de espécie, porte, cor ou região com o seu pet.`}
+                    ? `Ainda não existem animais ${isPerdidoPublicado ? 'em busca do tutor' : 'perdidos'} cadastrados no sistema. Seu cadastro já está público na lista para que outras pessoas vejam!`
+                    : `Analisamos os animais ${isPerdidoPublicado ? 'em busca do tutor' : 'perdidos'} existentes, mas nenhum apresentou semelhança suficiente de espécie, porte, cor ou região com o seu pet.`}
                 </p>
               </div>
               <div className="pt-2">
@@ -306,7 +306,7 @@ export default function Resumo() {
               </span>
             ) : (
               <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-[#e8f5e9] text-[#28a745] border border-[#28a745]/30 shadow-2xs">
-                Animal Encontrado
+                Procura-se o dono
               </span>
             )}
           </div>
@@ -359,7 +359,7 @@ export default function Resumo() {
               <div className="p-3.5 rounded-xl bg-[#faf7f2] border border-[#e5e0d8]/80">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b6b6b] block flex items-center gap-1">
                   <User className="w-3.5 h-3.5 text-[#2d8f6f]" />
-                  {isPerdido ? 'Quem perdeu' : 'Quem encontrou'}
+                  {isPerdido ? 'Quem perdeu' : 'Quem acolheu'}
                 </span>
                 <span className="text-sm font-semibold text-[#2b2b2b] mt-0.5 block">
                   {animal.nomePessoa}

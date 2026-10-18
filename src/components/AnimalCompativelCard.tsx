@@ -87,15 +87,19 @@ export const AnimalCompativelCard: React.FC<AnimalCompativelCardProps> = ({ item
           </div>
         )}
 
-        {/* Badge do Tipo (Perdido / Encontrado) */}
+        {/* Badge do Tipo (Perdido / Procura-se o dono / Reunido) */}
         <div className="absolute top-3 left-3">
-          {isPerdido ? (
+          {animal.tipo === 'reunido' ? (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500 text-white border border-amber-600 shadow-2xs">
+              Reunido com a família
+            </span>
+          ) : isPerdido ? (
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#fdecea] text-[#d9534f] border border-[#d9534f]/30 shadow-2xs">
               Perdido
             </span>
           ) : (
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#e8f5e9] text-[#28a745] border border-[#28a745]/30 shadow-2xs">
-              Encontrado
+              Procura-se o dono
             </span>
           )}
         </div>
@@ -168,7 +172,7 @@ export const AnimalCompativelCard: React.FC<AnimalCompativelCardProps> = ({ item
             <span className="inline-flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-[#6b6b6b]" />
               <span>
-                {isPerdido ? 'Perdido em:' : 'Achado em:'} {formatarData(animal.data)}
+                {isPerdido ? 'Perdido em:' : 'Acolhido em:'} {formatarData(animal.data)}
               </span>
             </span>
           </div>

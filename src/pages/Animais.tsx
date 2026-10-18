@@ -18,7 +18,7 @@ export default function Animais() {
   const { animais, isLoading, error, recarregarAnimais } = usePets()
 
   // Filtros:
-  // 1. Tipo: "todos" | "perdido" | "encontrado"
+  // 1. Tipo: "todos" | "perdido" | "encontrado" | "reunido"
   // 2. Espécie: "todas" | EspecieAnimal
   // 3. Cidade: "todas" | string
   const [filtroTipo, setFiltroTipo] = useState<string>('todos')
@@ -34,9 +34,10 @@ export default function Animais() {
     return Array.from(set).sort()
   }, [animais])
 
-  // Filtragem combinada em tempo real
+  // Filtragem combinada em tempo real:
+  // Animais "reunidos" ficam claramente no final da lista quando "todos" estiver selecionado
   const animaisFiltrados = useMemo(() => {
-    return animais.filter((animal) => {
+    const filtrados = animais.filter((animal) => {
       // Filtro Tipo
       if (filtroTipo !== 'todos' && animal.tipo !== filtroTipo) {
         return false
@@ -51,6 +52,17 @@ export default function Animais() {
       }
       return true
     })
+
+    // Se o filtro for "todos", prioriza os ativos primeiro e põe os reunidos no final
+    if (filtroTipo === 'todos') {
+      return [...filtrados].sort((a, b) => {
+        if (a.tipo === 'reunido' && b.tipo !== 'reunido') return 1
+        if (a.tipo !== 'reunido' && b.tipo === 'reunido') return -1
+        return 0
+      })
+    }
+
+    return filtrados
   }, [animais, filtroTipo, filtroEspecie, filtroCidade])
 
   const totalPerdidos = useMemo(() => animais.filter((a) => a.tipo === 'perdido').length, [animais])
@@ -58,6 +70,7 @@ export default function Animais() {
     () => animais.filter((a) => a.tipo === 'encontrado').length,
     [animais],
   )
+  const totalReunidos = useMemo(() => animais.filter((a) => a.tipo === 'reunido').length, [animais])
 
   const limparFiltros = () => {
     setFiltroTipo('todos')
@@ -81,18 +94,23 @@ export default function Animais() {
             Animais cadastrados
           </h1>
           <p className="text-sm sm:text-base text-[#6b6b6b] mt-1">
-            Acompanhe os animais perdidos e encontrados na sua região.
+            Acompanhe os animais perdidos, em busca do tutor ou reunidos com a família.
           </p>
         </div>
 
         {/* Resumo rápido de contagem */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="px-3.5 py-1.5 rounded-full bg-[#fdecea] border border-[#d9534f]/30 text-xs font-semibold text-[#d9534f]">
             {totalPerdidos} Perdidos
           </div>
           <div className="px-3.5 py-1.5 rounded-full bg-[#e8f5e9] border border-[#28a745]/30 text-xs font-semibold text-[#28a745]">
-            {totalEncontrados} Encontrados
+            {totalEncontrados} Procura-se o dono
           </div>
+          {totalReunidos > 0 && (
+            <div className="px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-300 text-xs font-semibold text-amber-800">
+              {totalReunidos} Reunidos com a família
+            </div>
+          )}
         </div>
       </div>
 
@@ -135,7 +153,8 @@ export default function Animais() {
             >
               <option value="todos">Todos os tipos</option>
               <option value="perdido">Apenas Perdidos</option>
-              <option value="encontrado">Apenas Encontrados</option>
+              <option value="encontrado">Procura-se o dono</option>
+              <option value="reunido">Reunidos com a família</option>
             </select>
           </div>
 
@@ -250,7 +269,7 @@ export default function Animais() {
             </h3>
             <p className="text-sm text-[#6b6b6b] leading-relaxed">
               {animais.length === 0
-                ? 'Seja o primeiro a cadastrar um animal perdido ou encontrado para ajudar na busca!'
+                ? 'Seja o primeiro a cadastrar um animal perdido ou acolhido para ajudar na busca!'
                 : 'Nenhum animal corresponde aos filtros selecionados. Experimente ajustar os filtros ou cadastre um novo animal.'}
             </p>
           </div>

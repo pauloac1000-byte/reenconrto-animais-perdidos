@@ -166,7 +166,7 @@ export default function Cadastro() {
     }
   }
 
-  // Alternar entre Perdido e Encontrado pelo switch no topo da página
+  // Alternar entre Perdido e Procura-se o dono pelo switch no topo da página
   const alternarTipo = (novoTipo: TipoAnimal) => {
     setTipo(novoTipo)
     setSearchParams({ perdido: novoTipo === 'perdido' ? 'true' : 'false' })
@@ -248,7 +248,7 @@ export default function Cadastro() {
     <div className="max-w-3xl mx-auto pb-12 animate-fade-in">
       {/* Cabeçalho do Formulário */}
       <div className="text-center space-y-3 mb-8">
-        {/* Seletor visual de tipo (Perdido / Encontrado) */}
+        {/* Seletor visual de tipo (Perdido / Procura-se o dono) */}
         <div className="inline-flex items-center p-1 bg-white border border-[#e5e0d8] rounded-full shadow-2xs mb-2">
           <button
             type="button"
@@ -270,12 +270,14 @@ export default function Cadastro() {
                 : 'text-[#6b6b6b] hover:text-[#28a745]'
             }`}
           >
-            Animal Encontrado
+            Procura-se o dono
           </button>
         </div>
 
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#2b2b2b]">
-          {tipo === 'perdido' ? 'Cadastro de animal perdido' : 'Cadastro de animal encontrado'}
+          {tipo === 'perdido'
+            ? 'Cadastro de animal perdido'
+            : 'Cadastro de animal — Procura-se o dono'}
         </h1>
 
         <p className="text-sm sm:text-base text-[#6b6b6b] max-w-lg mx-auto">
@@ -562,7 +564,9 @@ export default function Cadastro() {
             htmlFor="data-input"
             className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
           >
-            {tipo === 'perdido' ? 'Data em que foi visto por último' : 'Data em que foi encontrado'}{' '}
+            {tipo === 'perdido'
+              ? 'Data em que foi visto por último'
+              : 'Data do resgate / acolhimento'}{' '}
             <span className="text-[#e03e3e]">*</span>
           </label>
           <div className="relative max-w-xs">
@@ -610,7 +614,7 @@ export default function Cadastro() {
                 placeholder={
                   tipo === 'perdido'
                     ? 'Quem perdeu o animal (ex.: Maria Silva)'
-                    : 'Quem encontrou o animal (ex.: Carlos Souza)'
+                    : 'Quem acolheu o animal (ex.: Carlos Souza)'
                 }
                 value={nomePessoa}
                 onChange={(e) => setNomePessoa(e.target.value)}
@@ -620,7 +624,7 @@ export default function Cadastro() {
             <p className="text-[11px] text-[#6b6b6b]">
               {tipo === 'perdido'
                 ? 'Tutor ou responsável que procura pelo pet.'
-                : 'Pessoa que encontrou e está cuidando ou avisando.'}
+                : 'Pessoa que resgatou/acolheu e procura o tutor.'}
             </p>
           </div>
 
@@ -687,7 +691,7 @@ export default function Cadastro() {
           <textarea
             id="desc-input"
             rows={3}
-            placeholder="Conte o que aconteceu, como o animal foi perdido ou encontrado…"
+            placeholder="Conte o que aconteceu, como o animal foi perdido ou resgatado…"
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             className="w-full p-3.5 bg-white rounded-xl border border-[#e5e0d8] text-sm text-[#2b2b2b] placeholder:text-[#6b6b6b]/60 focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all resize-y"

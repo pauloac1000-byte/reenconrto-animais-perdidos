@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { AnimalCadastro } from '@/types/animal'
-import { listarAnimais, criarAnimal } from '@/services/animalService'
+import { listarAnimais, criarAnimal, marcarAnimalComoReunido } from '@/services/animalService'
 
 interface PetContextType {
   animais: AnimalCadastro[]
@@ -8,6 +8,7 @@ interface PetContextType {
   error: string | null
   adicionarAnimal: (animal: Omit<AnimalCadastro, 'id' | 'createdAt'>) => Promise<AnimalCadastro>
   recarregarAnimais: () => Promise<void>
+  marcarReunido: (id: string) => Promise<AnimalCadastro>
   cadastroEmAndamento: AnimalCadastro | null
   setCadastroEmAndamento: (animal: AnimalCadastro | null) => void
 }
@@ -47,6 +48,12 @@ export const PetProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return animalCriado
   }
 
+  const marcarReunido = async (id: string): Promise<AnimalCadastro> => {
+    const atualizado = await marcarAnimalComoReunido(id)
+    setAnimais((prev) => prev.map((a) => (a.id === id ? { ...a, tipo: 'reunido' } : a)))
+    return atualizado
+  }
+
   return (
     <PetContext.Provider
       value={{
@@ -55,6 +62,7 @@ export const PetProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         error,
         adicionarAnimal,
         recarregarAnimais,
+        marcarReunido,
         cadastroEmAndamento,
         setCadastroEmAndamento,
       }}

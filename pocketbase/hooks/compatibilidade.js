@@ -23,16 +23,27 @@ routerAdd('POST', '/backend/v1/analisar-compatibilidade', (e) => {
     }
 
     const tipoRef = animalRef.getString('tipo')
+
+    // Se o animal já estiver reunido com a família, não participa de análise
+    if (tipoRef === 'reunido') {
+      return e.json(200, {
+        analisado: true,
+        totalCandidatos: 0,
+        compatibilidades: [],
+        aviso: 'Animal já se encontra reunido com a família.',
+      })
+    }
+
     const tipoOposto = tipoRef === 'perdido' ? 'encontrado' : 'perdido'
     const especieRef = animalRef.getString('especie')
 
-    // 2. Buscar candidatos do tipo oposto.
+    // 2. Buscar candidatos do tipo oposto (excluindo qualquer animal com status 'reunido').
     // Damos prioridade à mesma espécie primeiro, limitando aos mais recentes
     let candidatos = []
     try {
       candidatos = $app.findRecordsByFilter(
         'animais',
-        `tipo = '${tipoOposto}' && especie = '${especieRef}'`,
+        `tipo = '${tipoOposto}' && tipo != 'reunido' && especie = '${especieRef}'`,
         '-created',
         15,
         0,
@@ -41,12 +52,12 @@ routerAdd('POST', '/backend/v1/analisar-compatibilidade', (e) => {
       candidatos = []
     }
 
-    // Se houver poucos da mesma espécie, podemos buscar outros do tipo oposto para cobrir eventuais enganos
+    // Se houver poucos da mesma espécie, podemos buscar outros do tipo oposto para cobrir eventuais enganos (excluindo 'reunido')
     if (candidatos.length < 5) {
       try {
         const outros = $app.findRecordsByFilter(
           'animais',
-          `tipo = '${tipoOposto}' && especie != '${especieRef}'`,
+          `tipo = '${tipoOposto}' && tipo != 'reunido' && especie != '${especieRef}'`,
           '-created',
           5,
           0,

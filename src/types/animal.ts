@@ -1,4 +1,4 @@
-export type TipoAnimal = 'perdido' | 'encontrado'
+export type TipoAnimal = 'perdido' | 'encontrado' | 'reunido'
 
 export type EspecieAnimal = 'Cão' | 'Gato' | 'Ave' | 'Coelho' | 'Outro'
 

@@ -76,18 +76,17 @@ export default function Index() {
               <div className="w-14 h-14 rounded-2xl bg-[#e8f5e9] text-[#2d8f6f] flex items-center justify-center shadow-inner group-hover:scale-110 group-hover:bg-[#2d8f6f] group-hover:text-white transition-all duration-300">
                 <HeartHandshake className="w-7 h-7" />
               </div>
-
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-[#2d8f6f]">
                   Acolhimento & Resgate
                 </span>
                 <h2 className="text-2xl font-bold text-[#2b2b2b] mt-1 group-hover:text-[#2d8f6f] transition-colors">
-                  Achei um animal
+                  Procura-se o dono
                 </h2>
                 <p className="text-sm text-[#6b6b6b] mt-2 leading-relaxed">
                   Você encontrou um pet? Ajude a encontrar o tutor.
                 </p>
-              </div>
+              </div>{' '}
             </div>
 
             <div className="mt-6 pt-4 border-t border-[#e5e0d8]/70 flex items-center justify-between">
@@ -113,8 +112,8 @@ export default function Index() {
               Últimos animais cadastrados
             </h2>
             <p className="text-sm text-[#6b6b6b] mt-1">
-              Veja os pets que foram perdidos ou encontrados recentemente por outros membros da
-              comunidade.
+              Veja os pets perdidos ou com busca de dono divulgados recentemente por outros membros
+              da comunidade.
             </p>
           </div>
 
@@ -144,7 +143,7 @@ export default function Index() {
             <PawPrint className="w-10 h-10 text-[#2d8f6f]/50 mx-auto" />
             <h3 className="text-base font-bold text-[#2b2b2b]">Nenhum animal cadastrado ainda</h3>
             <p className="text-sm text-[#6b6b6b] max-w-md mx-auto">
-              Cadastre um animal perdido ou encontrado para que ele apareça aqui e no mural
+              Cadastre um animal perdido ou em busca do tutor para que ele apareça aqui e no mural
               comunitário.
             </p>
           </div>

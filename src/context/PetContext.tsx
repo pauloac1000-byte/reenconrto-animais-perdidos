@@ -1,10 +1,13 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { AnimalCadastro } from '@/types/animal'
-import { DADOS_EXEMPLO_ANIMAIS } from '@/data/animais'
+import { listarAnimais, criarAnimal } from '@/services/animalService'
 
 interface PetContextType {
   animais: AnimalCadastro[]
-  adicionarAnimal: (animal: Omit<AnimalCadastro, 'id' | 'createdAt'>) => AnimalCadastro
+  isLoading: boolean
+  error: string | null
+  adicionarAnimal: (animal: Omit<AnimalCadastro, 'id' | 'createdAt'>) => Promise<AnimalCadastro>
+  recarregarAnimais: () => Promise<void>
   cadastroEmAndamento: AnimalCadastro | null
   setCadastroEmAndamento: (animal: AnimalCadastro | null) => void
 }
@@ -12,17 +15,35 @@ interface PetContextType {
 const PetContext = createContext<PetContextType | undefined>(undefined)
 
 export const PetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [animais, setAnimais] = useState<AnimalCadastro[]>(DADOS_EXEMPLO_ANIMAIS)
+  const [animais, setAnimais] = useState<AnimalCadastro[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
   const [cadastroEmAndamento, setCadastroEmAndamento] = useState<AnimalCadastro | null>(null)
 
-  const adicionarAnimal = (novo: Omit<AnimalCadastro, 'id' | 'createdAt'>) => {
-    const animalCriado: AnimalCadastro = {
-      ...novo,
-      id: `sessao-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      createdAt: new Date().toISOString(),
+  const recarregarAnimais = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const data = await listarAnimais()
+      setAnimais(data)
+    } catch (err) {
+      console.error('Erro ao carregar animais do banco:', err)
+      setError('Não foi possível carregar os animais cadastrados.')
+    } finally {
+      setIsLoading(false)
     }
-    // O novo animal entra no topo da lista
-    setAnimais((prev) => [animalCriado, ...prev])
+  }, [])
+
+  useEffect(() => {
+    recarregarAnimais()
+  }, [recarregarAnimais])
+
+  const adicionarAnimal = async (
+    novo: Omit<AnimalCadastro, 'id' | 'createdAt'>,
+  ): Promise<AnimalCadastro> => {
+    const animalCriado = await criarAnimal(novo)
+    // O novo animal entra no topo da lista em tempo real
+    setAnimais((prev) => [animalCriado, ...prev.filter((a) => a.id !== animalCriado.id)])
     return animalCriado
   }
 
@@ -30,7 +51,10 @@ export const PetProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <PetContext.Provider
       value={{
         animais,
+        isLoading,
+        error,
         adicionarAnimal,
+        recarregarAnimais,
         cadastroEmAndamento,
         setCadastroEmAndamento,
       }}

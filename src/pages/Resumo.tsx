@@ -1,6 +1,16 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Check, Edit3, Send, MapPin, Calendar, Phone, MessageSquare, Sparkles } from 'lucide-react'
+import {
+  Check,
+  Edit3,
+  Send,
+  MapPin,
+  Calendar,
+  Phone,
+  MessageSquare,
+  Sparkles,
+  Loader2,
+} from 'lucide-react'
 import type { AnimalCadastro } from '@/types/animal'
 import { usePets } from '@/context/PetContext'
 import { useToast } from '@/hooks/use-toast'
@@ -10,6 +20,7 @@ export default function Resumo() {
   const navigate = useNavigate()
   const { toast } = useToast()
   const { adicionarAnimal, setCadastroEmAndamento } = usePets()
+  const [salvando, setSalvando] = useState(false)
 
   // Dados recebidos via estado de navegação (location.state.animal)
   const animal = (location.state as { animal?: AnimalCadastro })?.animal
@@ -53,38 +64,51 @@ export default function Resumo() {
   }
 
   // Ação 2: Confirmar e publicar
-  const handleConfirmar = () => {
-    // Adiciona à lista em memória global
-    adicionarAnimal({
-      tipo: animal.tipo,
-      fotoUrl: animal.fotoUrl,
-      especie: animal.especie,
-      porte: animal.porte,
-      cor: animal.cor,
-      cidade: animal.cidade,
-      bairro: animal.bairro,
-      data: animal.data,
-      caracteristicas: animal.caracteristicas,
-      descricao: animal.descricao,
-      telefone: animal.telefone,
-      whatsapp: animal.whatsapp,
-    })
+  const handleConfirmar = async () => {
+    if (salvando) return
+    setSalvando(true)
 
-    // Limpa o rascunho
-    setCadastroEmAndamento(null)
+    try {
+      // Salva de verdade no banco de dados do Skip Cloud
+      await adicionarAnimal({
+        tipo: animal.tipo,
+        fotoUrl: animal.fotoUrl,
+        especie: animal.especie,
+        porte: animal.porte,
+        cor: animal.cor,
+        cidade: animal.cidade,
+        bairro: animal.bairro,
+        data: animal.data,
+        caracteristicas: animal.caracteristicas,
+        descricao: animal.descricao,
+        telefone: animal.telefone,
+        whatsapp: animal.whatsapp,
+      })
 
-    // Dispara toast verde de sucesso conforme especificação
-    toast({
-      title: 'Cadastro publicado com sucesso!',
-      description: isPerdido
-        ? 'Seu pet já está visível na lista pública para ajudar nas buscas.'
-        : 'O animal já está visível para que o tutor possa encontrá-lo.',
-      className: 'bg-[#28a745] text-white border-0 shadow-lg',
-      duration: 4000,
-    })
+      // Limpa o rascunho
+      setCadastroEmAndamento(null)
 
-    // Redireciona para /animais
-    navigate('/animais')
+      // Dispara toast verde de sucesso conforme especificação
+      toast({
+        title: 'Cadastro salvo com sucesso no banco!',
+        description: isPerdido
+          ? 'Seu pet foi gravado no banco de dados e já está visível na lista pública para ajudar nas buscas.'
+          : 'O animal foi gravado no banco de dados e já está visível para que o tutor possa encontrá-lo.',
+        className: 'bg-[#28a745] text-white border-0 shadow-lg',
+        duration: 4000,
+      })
+
+      // Redireciona para /animais
+      navigate('/animais')
+    } catch (err) {
+      console.error('Erro ao salvar cadastro:', err)
+      toast({
+        title: 'Erro ao salvar cadastro',
+        description: 'Houve uma falha ao salvar as informações no banco de dados. Tente novamente.',
+        variant: 'destructive',
+      })
+      setSalvando(false)
+    }
   }
 
   return (
@@ -243,7 +267,8 @@ export default function Resumo() {
           <button
             type="button"
             onClick={handleEditar}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-[10px] border-2 border-[#2d8f6f] text-[#2d8f6f] hover:bg-[#2d8f6f] hover:text-white font-semibold text-sm transition-all duration-200"
+            disabled={salvando}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-[10px] border-2 border-[#2d8f6f] text-[#2d8f6f] hover:bg-[#2d8f6f] hover:text-white font-semibold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Edit3 className="w-4 h-4" />
             <span>Editar cadastro</span>
@@ -252,11 +277,21 @@ export default function Resumo() {
           <button
             type="button"
             onClick={handleConfirmar}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-[10px] bg-[#2d8f6f] hover:bg-[#237a5e] text-white font-semibold text-base shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+            disabled={salvando}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-[10px] bg-[#2d8f6f] hover:bg-[#237a5e] text-white font-semibold text-base shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed"
           >
-            <Send className="w-4 h-4" />
-            <span>Confirmar e publicar</span>
-            <Check className="w-4 h-4" />
+            {salvando ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Salvando no banco…</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                <span>Confirmar e publicar</span>
+                <Check className="w-4 h-4" />
+              </>
+            )}
           </button>
         </div>
       </div>

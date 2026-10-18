@@ -1,12 +1,21 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { PawPrint, Filter, RotateCcw, PlusCircle, Frown, MapPin, Tag } from 'lucide-react'
+import {
+  PawPrint,
+  Filter,
+  RotateCcw,
+  PlusCircle,
+  Frown,
+  MapPin,
+  Tag,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react'
 import { usePets } from '@/context/PetContext'
 import { AnimalCard } from '@/components/AnimalCard'
-import type { EspecieAnimal } from '@/types/animal'
 
 export default function Animais() {
-  const { animais } = usePets()
+  const { animais, isLoading, error, recarregarAnimais } = usePets()
 
   // Filtros:
   // 1. Tipo: "todos" | "perdido" | "encontrado"
@@ -187,15 +196,41 @@ export default function Animais() {
         </div>
       </div>
 
-      {/* Grid Responsivo de Cards */}
-      {animaisFiltrados.length > 0 ? (
+      {/* Estado de Carregamento Discreto */}
+      {isLoading ? (
+        <div className="bg-white rounded-[20px] border border-[#e5e0d8] p-12 text-center max-w-md mx-auto shadow-sm space-y-4">
+          <Loader2 className="w-8 h-8 text-[#2d8f6f] animate-spin mx-auto" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-[#2b2b2b]">Carregando cadastros do banco…</p>
+            <p className="text-xs text-[#6b6b6b]">Buscando dados em tempo real</p>
+          </div>
+        </div>
+      ) : error ? (
+        /* Estado de Erro Discreto */
+        <div className="bg-white rounded-[20px] border border-[#e03e3e]/30 p-8 text-center max-w-md mx-auto shadow-sm space-y-4">
+          <AlertCircle className="w-8 h-8 text-[#e03e3e] mx-auto" />
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-[#2b2b2b]">{error}</p>
+            <p className="text-xs text-[#6b6b6b]">Verifique sua conexão e tente novamente.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => recarregarAnimais()}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[10px] bg-[#2d8f6f] text-white text-xs font-semibold hover:bg-[#237a5e] transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Tentar novamente</span>
+          </button>
+        </div>
+      ) : animaisFiltrados.length > 0 ? (
+        /* Grid Responsivo de Cards */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {animaisFiltrados.map((animal) => (
             <AnimalCard key={animal.id} animal={animal} />
           ))}
         </div>
       ) : (
-        /* Estado Vazio Amigável com imagem / cachorro triste */
+        /* Estado Vazio Amigável */
         <div className="bg-white rounded-[20px] border border-[#e5e0d8] p-8 sm:p-12 text-center max-w-lg mx-auto shadow-sm space-y-5 animate-fade-in">
           <div className="relative w-36 h-36 mx-auto rounded-full overflow-hidden border-4 border-[#faf7f2] shadow-inner bg-[#faf7f2] flex items-center justify-center">
             <img
@@ -203,7 +238,6 @@ export default function Animais() {
               alt="Nenhum animal encontrado"
               className="w-full h-full object-cover"
               onError={(e) => {
-                // Se falhar o carregamento, troca por ícone
                 e.currentTarget.style.display = 'none'
               }}
             />
@@ -211,10 +245,13 @@ export default function Animais() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-xl font-bold text-[#2b2b2b]">Nenhum animal encontrado</h3>
+            <h3 className="text-xl font-bold text-[#2b2b2b]">
+              {animais.length === 0 ? 'Nenhum animal cadastrado ainda' : 'Nenhum animal encontrado'}
+            </h3>
             <p className="text-sm text-[#6b6b6b] leading-relaxed">
-              Nenhum animal corresponde aos filtros selecionados. Experimente ajustar os filtros ou
-              cadastre um novo animal.
+              {animais.length === 0
+                ? 'Seja o primeiro a cadastrar um animal perdido ou encontrado para ajudar na busca!'
+                : 'Nenhum animal corresponde aos filtros selecionados. Experimente ajustar os filtros ou cadastre um novo animal.'}
             </p>
           </div>
 

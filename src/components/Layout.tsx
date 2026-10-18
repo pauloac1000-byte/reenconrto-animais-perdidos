@@ -168,7 +168,8 @@ export default function Layout() {
 
           <div className="mt-6 pt-6 border-t border-[#e5e0d8]/60 text-center text-xs text-[#6b6b6b]">
             <p>
-              Dados de exemplo, sem banco de dados conectado — as postagens não são permanentes.
+              Banco de dados integrado ao Skip Cloud — cadastros salvos em tempo real com fotos e
+              contatos.
             </p>
           </div>
         </div>

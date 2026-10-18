@@ -1,13 +1,12 @@
-import React from 'react'
 import { Link } from 'react-router-dom'
-import { HeartCrack, HeartHandshake, ArrowRight, Sparkles, PawPrint } from 'lucide-react'
+import { HeartCrack, HeartHandshake, ArrowRight, Sparkles, PawPrint, Loader2 } from 'lucide-react'
 import { usePets } from '@/context/PetContext'
 import { AnimalCard } from '@/components/AnimalCard'
 
 export default function Index() {
-  const { animais } = usePets()
+  const { animais, isLoading } = usePets()
 
-  // Primeiros 3 cards de exemplo para a prévia da Home
+  // Primeiros 3 cards para a prévia da Home
   const previaAnimais = animais.slice(0, 3)
 
   return (
@@ -128,12 +127,28 @@ export default function Index() {
           </Link>
         </div>
 
-        {/* Grid de 3 cards de exemplo */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {previaAnimais.map((animal) => (
-            <AnimalCard key={animal.id} animal={animal} />
-          ))}
-        </div>
+        {/* Grid de 3 cards recentes */}
+        {isLoading ? (
+          <div className="bg-white rounded-[20px] border border-[#e5e0d8] p-10 text-center shadow-sm space-y-3">
+            <Loader2 className="w-7 h-7 text-[#2d8f6f] animate-spin mx-auto" />
+            <p className="text-sm text-[#6b6b6b]">Carregando cadastros recentes do banco…</p>
+          </div>
+        ) : previaAnimais.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {previaAnimais.map((animal) => (
+              <AnimalCard key={animal.id} animal={animal} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-[20px] border border-[#e5e0d8] p-10 text-center shadow-sm space-y-3">
+            <PawPrint className="w-10 h-10 text-[#2d8f6f]/50 mx-auto" />
+            <h3 className="text-base font-bold text-[#2b2b2b]">Nenhum animal cadastrado ainda</h3>
+            <p className="text-sm text-[#6b6b6b] max-w-md mx-auto">
+              Cadastre um animal perdido ou encontrado para que ele apareça aqui e no mural
+              comunitário.
+            </p>
+          </div>
+        )}
 
         {/* Botão de destaque para ir para /animais */}
         <div className="text-center pt-4">

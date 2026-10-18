@@ -241,12 +241,12 @@ export const AnimalCompativelCard: React.FC<AnimalCompativelCardProps> = ({ item
             )}
           </div>
 
-          {/* Link para /animais */}
+          {/* Link para /animal/:id */}
           <Link
-            to="/animais"
+            to={`/animal/${animal.id}`}
             className="inline-flex items-center gap-1 text-xs font-semibold text-[#2d8f6f] hover:text-[#237a5e] hover:underline transition-colors"
           >
-            <span>Ver no mural público</span>
+            <span>Ver detalhes completos</span>
             <ExternalLink className="w-3 h-3" />
           </Link>
         </div>

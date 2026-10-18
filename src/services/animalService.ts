@@ -22,6 +22,26 @@ function dataURLtoFile(dataurl: string, filename: string): File {
  * Busca todos os animais gravados na coleção 'animais' do Skip Cloud (PocketBase),
  * ordenados do mais recente para o mais antigo.
  */
+/**
+ * Busca um único animal pelo ID na coleção 'animais' do Skip Cloud (PocketBase)
+ */
+export async function buscarAnimalPorId(id: string): Promise<AnimalCadastro | null> {
+  try {
+    const record = await pb.collection('animais').getOne<AnimalRecord>(id, {
+      requestKey: null,
+    })
+    return recordToAnimal(record)
+  } catch (err: unknown) {
+    // Se for 404 (not found), retorna null suavemente
+    const status = (err as { status?: number })?.status
+    if (status === 404) {
+      return null
+    }
+    console.error(`Erro ao buscar animal por ID ${id}:`, err)
+    throw err
+  }
+}
+
 export async function listarAnimais(): Promise<AnimalCadastro[]> {
   try {
     const records = await pb.collection('animais').getFullList<AnimalRecord>({

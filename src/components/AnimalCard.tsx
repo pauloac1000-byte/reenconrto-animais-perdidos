@@ -1,6 +1,16 @@
 import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { AnimalCadastro } from '@/types/animal'
-import { MapPin, Calendar, Phone, MessageSquare, PawPrint, Heart, User } from 'lucide-react'
+import {
+  MapPin,
+  Calendar,
+  Phone,
+  MessageSquare,
+  PawPrint,
+  Heart,
+  User,
+  ChevronRight,
+} from 'lucide-react'
 
 interface AnimalCardProps {
   animal: AnimalCadastro
@@ -25,7 +35,14 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
   }
 
   return (
-    <article className="group bg-white rounded-[16px] border border-[#e5e0d8] shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden">
+    <article className="group bg-white rounded-[16px] border border-[#e5e0d8] shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden relative">
+      {/* Link de cobertura em todo o card para navegação para /animal/:id */}
+      <Link
+        to={`/animal/${animal.id}`}
+        aria-label={`Ver detalhes de ${animal.nomePet || animal.especie}`}
+        className="absolute inset-0 z-10 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2d8f6f] focus:ring-offset-2 rounded-[16px]"
+      />
+
       {/* Imagem do animal com fallback */}
       <div className="relative w-full aspect-[4/3] bg-[#faf7f2] overflow-hidden border-b border-[#e5e0d8]">
         {!imgError && animal.fotoUrl ? (
@@ -123,17 +140,20 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
           )}
         </div>
 
-        {/* Bloco de Contato em Destaque */}
+        {/* Bloco de Contato em Destaque e Ver detalhes */}
         <div className="mt-4 pt-3 border-t border-[#e5e0d8] bg-[#faf7f2] -mx-4 -mb-4 sm:-mx-5 sm:-mb-5 p-3 sm:px-5 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-[11px] uppercase tracking-wider font-bold text-[#6b6b6b]">
-            Contato:
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#2d8f6f] group-hover:text-[#237a5e] transition-colors">
+            <span>Ver detalhes</span>
+            <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </span>
-          <div className="flex items-center gap-2">
+
+          <div className="relative z-20 flex items-center gap-2">
             {animal.whatsapp && (
               <a
                 href={`https://wa.me/55${animal.whatsapp.replace(/\D/g, '')}`}
                 target="_blank"
                 rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-[#28a745] hover:text-[#237a5e] bg-white border border-[#28a745]/30 px-2.5 py-1 rounded-md shadow-2xs hover:bg-[#e8f5e9] transition-colors"
                 title={`WhatsApp: ${animal.whatsapp}`}
               >
@@ -144,6 +164,7 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
             {!animal.whatsapp && animal.telefone && (
               <a
                 href={`tel:${animal.telefone.replace(/\D/g, '')}`}
+                onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-[#2d8f6f] hover:text-[#237a5e] bg-white border border-[#2d8f6f]/30 px-2.5 py-1 rounded-md shadow-2xs hover:bg-[#e8f5e9] transition-colors"
                 title={`Ligar: ${animal.telefone}`}
               >

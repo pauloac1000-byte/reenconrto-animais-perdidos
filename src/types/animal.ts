@@ -10,6 +10,7 @@ export interface AnimalCadastro {
   id: string
   tipo: TipoAnimal
   fotoUrl: string
+  fotoArquivo?: File | null
   especie: EspecieAnimal
   porte: PorteAnimal
   cor: CorAnimal

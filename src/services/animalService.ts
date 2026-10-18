@@ -1,167 +1,90 @@
 import type { AnimalCadastro } from '@/types/animal'
-import { animalToRecord, recordToAnimal, type AnimalRecord } from './schema'
+import pb from '@/lib/pocketbase/client'
+import { recordToAnimal, type AnimalRecord } from './schema'
 
 /**
- * Serviço de banco de dados para a tabela 'animais' do Skip Cloud.
- *
- * Integra com a API REST do Skip Cloud se VITE_SKIP_CLOUD_URL estiver definida,
- * e conta com armazenamento persistente em IndexedDB/LocalStorage do navegador
- * como fallback garantido, mantendo todos os registros reais gravados localmente
- * e sincronizados.
+ * Converte data URL em objeto File se necessário (para casos de preview/edição)
  */
-
-const STORAGE_KEY = 'skip_cloud_animais_db'
-const DB_NAME = 'SkipCloudPetsDB'
-const DB_VERSION = 1
-const STORE_NAME = 'animais'
-
-// Auxiliar para abrir IndexedDB (suporta armazenamento robusto de fotos em alta resolução)
-function openIndexedDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    if (typeof window === 'undefined' || !window.indexedDB) {
-      reject(new Error('IndexedDB não suportado neste ambiente'))
-      return
-    }
-
-    const request = window.indexedDB.open(DB_NAME, DB_VERSION)
-
-    request.onupgradeneeded = () => {
-      const db = request.result
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' })
-        store.createIndex('tipo', 'tipo', { unique: false })
-        store.createIndex('created_at', 'created_at', { unique: false })
-      }
-    }
-
-    request.onsuccess = () => resolve(request.result)
-    request.onerror = () => reject(request.error)
-  })
-}
-
-// Fallback síncrono com localStorage para ambientes onde IndexedDB falhar
-function getFallbackLocalStorage(): AnimalRecord[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    return JSON.parse(raw) as AnimalRecord[]
-  } catch {
-    return []
+function dataURLtoFile(dataurl: string, filename: string): File {
+  const arr = dataurl.split(',')
+  const mimeMatch = arr[0].match(/:(.*?);/)
+  const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+  const bstr = atob(arr[1])
+  let n = bstr.length
+  const u8arr = new Uint8Array(n)
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n)
   }
-}
-
-function saveFallbackLocalStorage(records: AnimalRecord[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records))
-  } catch (err) {
-    console.warn('Falha ao salvar no localStorage:', err)
-  }
+  return new File([u8arr], filename, { type: mime })
 }
 
 /**
- * Busca todos os animais gravados no banco
+ * Busca todos os animais gravados na coleção 'animais' do Skip Cloud (PocketBase),
+ * ordenados do mais recente para o mais antigo.
  */
 export async function listarAnimais(): Promise<AnimalCadastro[]> {
-  // 1. Tentar API Skip Cloud se endpoint configurado
-  const skipCloudUrl = import.meta.env?.VITE_SKIP_CLOUD_URL
-  if (skipCloudUrl) {
-    try {
-      const res = await fetch(`${skipCloudUrl}/backend/v1/animais`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...(import.meta.env.VITE_SKIP_CLOUD_ANON_KEY
-            ? { Authorization: `Bearer ${import.meta.env.VITE_SKIP_CLOUD_ANON_KEY}` }
-            : {}),
-        },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        const records: AnimalRecord[] = Array.isArray(data) ? data : data.records || []
-        return records.map(recordToAnimal)
-      }
-    } catch (err) {
-      console.warn('Skip Cloud remoto indisponível, buscando persistência local:', err)
-    }
-  }
-
-  // 2. Buscar no IndexedDB
   try {
-    const db = await openIndexedDB()
-    const records = await new Promise<AnimalRecord[]>((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly')
-      const store = tx.objectStore(STORE_NAME)
-      const request = store.getAll()
-      request.onsuccess = () => resolve((request.result as AnimalRecord[]) || [])
-      request.onerror = () => reject(request.error)
+    const records = await pb.collection('animais').getFullList<AnimalRecord>({
+      sort: '-created',
+      requestKey: null,
     })
 
-    // Ordenar decrescente por created_at
-    records.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     return records.map(recordToAnimal)
   } catch (err) {
-    console.warn('Erro ao consultar IndexedDB, usando fallback:', err)
-    const records = getFallbackLocalStorage()
-    records.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    return records.map(recordToAnimal)
+    console.error('Erro ao listar animais no PocketBase:', err)
+    throw err
   }
 }
 
 /**
- * Salva um novo cadastro real de animal no banco (caminhos 'perdido' e 'encontrado')
+ * Salva um novo cadastro real de animal na coleção 'animais' do Skip Cloud (PocketBase)
+ * suportando upload real do arquivo de imagem (FormData).
  */
 export async function criarAnimal(
   dados: Omit<AnimalCadastro, 'id' | 'createdAt'>,
 ): Promise<AnimalCadastro> {
-  const record = animalToRecord(dados)
-
-  // 1. Salvar no Skip Cloud se configurado
-  const skipCloudUrl = import.meta.env?.VITE_SKIP_CLOUD_URL
-  if (skipCloudUrl) {
-    try {
-      const res = await fetch(`${skipCloudUrl}/backend/v1/animais`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(import.meta.env.VITE_SKIP_CLOUD_ANON_KEY
-            ? { Authorization: `Bearer ${import.meta.env.VITE_SKIP_CLOUD_ANON_KEY}` }
-            : {}),
-        },
-        body: JSON.stringify(record),
-      })
-      if (res.ok) {
-        const saved = await res.json()
-        if (saved && saved.id) {
-          const animalSalvo = recordToAnimal(saved)
-          // Salva cópia local para cache rápido e offline
-          await salvarLocal(saved)
-          return animalSalvo
-        }
-      }
-    } catch (err) {
-      console.warn('Erro ao salvar no Skip Cloud remoto, persistindo localmente:', err)
-    }
-  }
-
-  // 2. Persistir localmente no banco IndexedDB
-  await salvarLocal(record)
-
-  return recordToAnimal(record)
-}
-
-async function salvarLocal(record: AnimalRecord): Promise<void> {
   try {
-    const db = await openIndexedDB()
-    await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite')
-      const store = tx.objectStore(STORE_NAME)
-      const request = store.put(record)
-      request.onsuccess = () => resolve()
-      request.onerror = () => reject(request.error)
-    })
+    const formData = new FormData()
+
+    formData.append('tipo', dados.tipo)
+    formData.append('especie', dados.especie)
+    formData.append('porte', dados.porte)
+    formData.append('cor', dados.cor)
+    formData.append('cidade', dados.cidade)
+    formData.append('bairro', dados.bairro)
+    formData.append('data', dados.data)
+
+    if (dados.caracteristicas) {
+      formData.append('caracteristicas', dados.caracteristicas)
+    }
+    if (dados.descricao) {
+      formData.append('descricao', dados.descricao)
+    }
+    if (dados.telefone) {
+      formData.append('telefone', dados.telefone)
+    }
+    if (dados.whatsapp) {
+      formData.append('whatsapp', dados.whatsapp)
+    }
+
+    // Processamento da foto: se tiver File anexado, usa diretamente;
+    // se tiver fotoUrl como data URL base64, converte para File
+    if (dados.fotoArquivo instanceof File) {
+      formData.append('foto', dados.fotoArquivo)
+    } else if (dados.fotoUrl && dados.fotoUrl.startsWith('data:image/')) {
+      const extensao = dados.fotoUrl.includes('image/png')
+        ? 'png'
+        : dados.fotoUrl.includes('image/webp')
+          ? 'webp'
+          : 'jpg'
+      const fileFromDataUrl = dataURLtoFile(dados.fotoUrl, `pet-${Date.now()}.${extensao}`)
+      formData.append('foto', fileFromDataUrl)
+    }
+
+    const createdRecord = await pb.collection('animais').create<AnimalRecord>(formData)
+    return recordToAnimal(createdRecord)
   } catch (err) {
-    console.warn('Falha no IndexedDB, persistindo no localStorage:', err)
-    const existing = getFallbackLocalStorage()
-    const updated = [record, ...existing.filter((r) => r.id !== record.id)]
-    saveFallbackLocalStorage(updated)
+    console.error('Erro ao criar animal no PocketBase:', err)
+    throw err
   }
 }

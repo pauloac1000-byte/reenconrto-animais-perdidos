@@ -69,10 +69,11 @@ export default function Resumo() {
     setSalvando(true)
 
     try {
-      // Salva de verdade no banco de dados do Skip Cloud
+      // Salva de verdade no banco de dados do Skip Cloud (PocketBase) com upload do arquivo
       await adicionarAnimal({
         tipo: animal.tipo,
         fotoUrl: animal.fotoUrl,
+        fotoArquivo: animal.fotoArquivo,
         especie: animal.especie,
         porte: animal.porte,
         cor: animal.cor,

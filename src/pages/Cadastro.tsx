@@ -74,6 +74,9 @@ export default function Cadastro() {
   const [tipo, setTipo] = useState<TipoAnimal>(
     dadosIniciaisState?.tipo || (isPerdido ? 'perdido' : 'encontrado'),
   )
+  const [fotoArquivo, setFotoArquivo] = useState<File | null>(
+    dadosIniciaisState?.fotoArquivo || null,
+  )
   const [fotoUrl, setFotoUrl] = useState<string>(dadosIniciaisState?.fotoUrl || '')
   const [especie, setEspecie] = useState<EspecieAnimal | ''>(dadosIniciaisState?.especie || '')
   const [porte, setPorte] = useState<PorteAnimal | ''>(dadosIniciaisState?.porte || '')
@@ -102,7 +105,7 @@ export default function Cadastro() {
     }
   }, [paramPerdido, dadosIniciaisState])
 
-  // Processa arquivo de imagem para Base64 preview
+  // Processa arquivo de imagem para upload e Base64 preview
   const handleFileProcess = (file: File) => {
     const tiposPermitidos = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
     if (!tiposPermitidos.includes(file.type)) {
@@ -113,7 +116,17 @@ export default function Cadastro() {
       return
     }
 
-    // Leitura em base64
+    if (file.size > 10 * 1024 * 1024) {
+      setErrors((prev) => ({
+        ...prev,
+        foto: 'O tamanho da imagem não pode ultrapassar 10MB.',
+      }))
+      return
+    }
+
+    setFotoArquivo(file)
+
+    // Leitura em base64 para visualização imediata
     const reader = new FileReader()
     reader.onload = () => {
       if (typeof reader.result === 'string') {
@@ -203,6 +216,7 @@ export default function Cadastro() {
       id: dadosIniciaisState?.id || `temp-${Date.now()}`,
       tipo,
       fotoUrl,
+      fotoArquivo,
       especie: especie as EspecieAnimal,
       porte: porte as PorteAnimal,
       cor: cor as CorAnimal,
@@ -309,7 +323,10 @@ export default function Cadastro() {
               {fotoUrl && (
                 <button
                   type="button"
-                  onClick={() => setFotoUrl('')}
+                  onClick={() => {
+                    setFotoUrl('')
+                    setFotoArquivo(null)
+                  }}
                   aria-label="Remover foto"
                   className="absolute bottom-1 right-1 p-2 rounded-full bg-[#e03e3e] text-white hover:bg-red-700 shadow-md transition-transform hover:scale-110"
                 >

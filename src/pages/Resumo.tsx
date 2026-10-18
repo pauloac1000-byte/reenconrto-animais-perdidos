@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import {
   Check,
   Edit3,
@@ -10,10 +10,17 @@ import {
   MessageSquare,
   Sparkles,
   Loader2,
+  ArrowRight,
+  PawPrint,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
 } from 'lucide-react'
-import type { AnimalCadastro } from '@/types/animal'
+import type { AnimalCadastro, AnaliseCompatibilidadeResultado } from '@/types/animal'
 import { usePets } from '@/context/PetContext'
 import { useToast } from '@/hooks/use-toast'
+import { analisarCompatibilidadeAnimal } from '@/services/animalService'
+import { AnimalCompativelCard } from '@/components/AnimalCompativelCard'
 
 export default function Resumo() {
   const location = useLocation()
@@ -21,6 +28,10 @@ export default function Resumo() {
   const { toast } = useToast()
   const { adicionarAnimal, setCadastroEmAndamento } = usePets()
   const [salvando, setSalvando] = useState(false)
+  const [etapaSalvamento, setEtapaSalvamento] = useState<string>('')
+  const [resultadoCompatibilidade, setResultadoCompatibilidade] =
+    useState<AnaliseCompatibilidadeResultado | null>(null)
+  const [animalPublicado, setAnimalPublicado] = useState<AnimalCadastro | null>(null)
 
   // Dados recebidos via estado de navegação (location.state.animal)
   const animal = (location.state as { animal?: AnimalCadastro })?.animal
@@ -67,10 +78,11 @@ export default function Resumo() {
   const handleConfirmar = async () => {
     if (salvando) return
     setSalvando(true)
+    setEtapaSalvamento('Salvando no banco…')
 
     try {
       // Salva de verdade no banco de dados do Skip Cloud (PocketBase) com upload do arquivo
-      await adicionarAnimal({
+      const animalCriado = await adicionarAnimal({
         tipo: animal.tipo,
         fotoUrl: animal.fotoUrl,
         fotoArquivo: animal.fotoArquivo,
@@ -86,6 +98,8 @@ export default function Resumo() {
         whatsapp: animal.whatsapp,
       })
 
+      setAnimalPublicado(animalCriado)
+
       // Limpa o rascunho
       setCadastroEmAndamento(null)
 
@@ -99,8 +113,20 @@ export default function Resumo() {
         duration: 4000,
       })
 
-      // Redireciona para /animais
-      navigate('/animais')
+      // Inicia análise de compatibilidade cruzada via IA com o animal criado
+      setEtapaSalvamento('Analisando compatibilidade com IA…')
+      try {
+        const analise = await analisarCompatibilidadeAnimal(animalCriado.id)
+        setResultadoCompatibilidade(analise)
+      } catch (errAnalise) {
+        console.error('Falha na análise de IA pós-cadastro:', errAnalise)
+        setResultadoCompatibilidade({
+          analisado: false,
+          totalCandidatos: 0,
+          compatibilidades: [],
+          erro: 'A análise de compatibilidade não pôde ser concluída no momento.',
+        })
+      }
     } catch (err) {
       console.error('Erro ao salvar cadastro:', err)
       toast({
@@ -109,7 +135,145 @@ export default function Resumo() {
         variant: 'destructive',
       })
       setSalvando(false)
+      setEtapaSalvamento('')
     }
+  }
+
+  // Se o cadastro já foi publicado com sucesso e temos o resultado da IA (ou encerrou a etapa de salvamento)
+  if (animalPublicado && resultadoCompatibilidade) {
+    const isPerdidoPublicado = animalPublicado.tipo === 'perdido'
+    const totalCompatíveis = resultadoCompatibilidade.compatibilidades.length
+
+    return (
+      <div className="max-w-4xl mx-auto pb-16 animate-fade-in space-y-8">
+        {/* Banner de Confirmação de Sucesso */}
+        <div className="bg-white rounded-[20px] border border-[#28a745]/30 p-6 sm:p-8 shadow-[0_4px_20px_rgba(40,167,69,0.08)] text-center space-y-3">
+          <div className="w-14 h-14 mx-auto rounded-full bg-[#e8f5e9] text-[#28a745] flex items-center justify-center">
+            <CheckCircle2 className="w-8 h-8" />
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#e8f5e9] text-[#28a745] text-xs font-bold uppercase tracking-wider">
+            <span>Cadastro publicado com sucesso</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#2b2b2b]">
+            {isPerdidoPublicado
+              ? 'Seu pet foi cadastrado e já está no mural público!'
+              : 'O animal encontrado foi cadastrado com sucesso!'}
+          </h1>
+          <p className="text-sm text-[#6b6b6b] max-w-xl mx-auto leading-relaxed">
+            {isPerdidoPublicado
+              ? 'Nossa Inteligência Artificial já analisou os animais encontrados no banco cruzando fotos, características e localização para você.'
+              : 'Nossa Inteligência Artificial já analisou os animais perdidos no banco cruzando fotos, características e localização com o pet que você achou.'}
+          </p>
+        </div>
+
+        {/* Seção de Análise de Compatibilidade por IA */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-[16px] border border-[#e5e0d8]">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#2d8f6f]">
+                <Sparkles className="w-4 h-4" />
+                <span>Análise de Compatibilidade por IA</span>
+              </div>
+              <h2 className="text-xl font-bold text-[#2b2b2b]">
+                {isPerdidoPublicado
+                  ? 'Animais achados compatíveis com o seu'
+                  : 'Animais perdidos compatíveis com o encontrado'}
+              </h2>
+              <p className="text-xs text-[#6b6b6b]">
+                Cruzamento inteligente de <strong>foto</strong>, <strong>características</strong> e{' '}
+                <strong>proximidade de localização</strong>.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="px-3.5 py-1.5 rounded-full bg-[#faf7f2] border border-[#e5e0d8] text-xs font-bold text-[#2b2b2b]">
+                {totalCompatíveis} {totalCompatíveis === 1 ? 'compatível' : 'compatíveis'}
+              </span>
+            </div>
+          </div>
+
+          {/* Estado de Erro da IA (Discreto) */}
+          {resultadoCompatibilidade.erro && totalCompatíveis === 0 && (
+            <div className="bg-white rounded-[16px] border border-[#f49b4f]/40 p-6 text-center space-y-3">
+              <AlertCircle className="w-8 h-8 text-[#f49b4f] mx-auto" />
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-[#2b2b2b]">
+                  Análise temporariamente indisponível
+                </h3>
+                <p className="text-xs text-[#6b6b6b] max-w-md mx-auto">
+                  Seu cadastro está 100% publicado e salvo com segurança. A análise automática por
+                  IA não pôde ser completada agora, mas você já pode conferir todos os cadastros no
+                  mural.
+                </p>
+              </div>
+              <Link
+                to="/animais"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#2d8f6f] text-white text-xs font-semibold hover:bg-[#237a5e] transition-colors"
+              >
+                <span>Ver mural público de animais</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          )}
+
+          {/* Nenhum candidato compatível */}
+          {!resultadoCompatibilidade.erro && totalCompatíveis === 0 && (
+            <div className="bg-white rounded-[20px] border border-[#e5e0d8] p-8 sm:p-12 text-center max-w-xl mx-auto shadow-sm space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-full bg-[#faf7f2] border border-[#e5e0d8] flex items-center justify-center text-[#2d8f6f]">
+                <HelpCircle className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-bold text-[#2b2b2b]">
+                  Nenhum animal compatível encontrado por enquanto
+                </h3>
+                <p className="text-xs sm:text-sm text-[#6b6b6b] leading-relaxed max-w-md mx-auto">
+                  {resultadoCompatibilidade.totalCandidatos === 0
+                    ? `Ainda não existem animais ${isPerdidoPublicado ? 'encontrados' : 'perdidos'} cadastrados no sistema. Seu cadastro já está público na lista para que outras pessoas vejam!`
+                    : `Analisamos os animais ${isPerdidoPublicado ? 'encontrados' : 'perdidos'} existentes, mas nenhum apresentou semelhança suficiente de espécie, porte, cor ou região com o seu pet.`}
+                </p>
+              </div>
+              <div className="pt-2">
+                <Link
+                  to="/animais"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-[10px] bg-[#2d8f6f] hover:bg-[#237a5e] text-white text-sm font-semibold transition-all shadow-sm"
+                >
+                  <span>Ir para o mural de animais</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Lista de animais compatíveis ordenados por porcentagem */}
+          {totalCompatíveis > 0 && (
+            <div className="space-y-4">
+              {resultadoCompatibilidade.compatibilidades.map((item) => (
+                <AnimalCompativelCard key={item.animal.id} item={item} />
+              ))}
+            </div>
+          )}
+
+          {/* Ações pós-análise */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#e5e0d8]">
+            <Link
+              to="/cadastro"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-[10px] border border-[#e5e0d8] text-[#2b2b2b] hover:bg-[#faf7f2] font-semibold text-xs sm:text-sm transition-all"
+            >
+              <PawPrint className="w-4 h-4 text-[#2d8f6f]" />
+              <span>Cadastrar outro animal</span>
+            </Link>
+
+            <Link
+              to="/animais"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[10px] bg-[#2d8f6f] hover:bg-[#237a5e] text-white font-semibold text-sm shadow-md transition-all"
+            >
+              <span>Ver todos os animais cadastrados</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -284,7 +448,7 @@ export default function Resumo() {
             {salvando ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Salvando no banco…</span>
+                <span>{etapaSalvamento || 'Salvando no banco…'}</span>
               </>
             ) : (
               <>

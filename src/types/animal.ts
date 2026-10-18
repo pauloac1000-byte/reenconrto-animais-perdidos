@@ -23,3 +23,17 @@ export interface AnimalCadastro {
   whatsapp?: string
   createdAt?: string
 }
+
+export interface AnimalCompativelItem {
+  animal: AnimalCadastro
+  porcentagem: number
+  explicacao: string
+}
+
+export interface AnaliseCompatibilidadeResultado {
+  analisado: boolean
+  totalCandidatos: number
+  compatibilidades: AnimalCompativelItem[]
+  erro?: string
+  aviso?: string
+}

@@ -1,4 +1,4 @@
-import type { AnimalCadastro } from '@/types/animal'
+import type { AnimalCadastro, AnaliseCompatibilidadeResultado } from '@/types/animal'
 import pb from '@/lib/pocketbase/client'
 import { recordToAnimal, type AnimalRecord } from './schema'
 
@@ -86,5 +86,35 @@ export async function criarAnimal(
   } catch (err) {
     console.error('Erro ao criar animal no PocketBase:', err)
     throw err
+  }
+}
+
+/**
+ * Executa a análise de compatibilidade por IA chamando o hook com agente nativo Skip Cloud
+ * Compara o animal recém-cadastrado com candidatos do tipo oposto (foto + características + localização).
+ */
+export async function analisarCompatibilidadeAnimal(
+  animalId: string,
+): Promise<AnaliseCompatibilidadeResultado> {
+  try {
+    const res = await pb.send<AnaliseCompatibilidadeResultado>(
+      '/backend/v1/analisar-compatibilidade',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ animalId }),
+      },
+    )
+    return res
+  } catch (err) {
+    console.error('Falha na chamada de análise de compatibilidade:', err)
+    return {
+      analisado: false,
+      totalCandidatos: 0,
+      compatibilidades: [],
+      erro: 'Não foi possível carregar a análise de compatibilidade no momento.',
+    }
   }
 }

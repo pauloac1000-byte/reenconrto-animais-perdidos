@@ -105,6 +105,7 @@ export default function Resumo() {
         whatsapp: animal.whatsapp,
         nomePessoa: animal.nomePessoa,
         nomePet: animal.nomePet,
+        emailAlertas: animal.emailAlertas,
       })
 
       setAnimalPublicado(animalCriado)

@@ -24,6 +24,7 @@ export interface AnimalCadastro {
   whatsapp?: string
   nomePessoa?: string
   nomePet?: string
+  emailAlertas?: string
   createdAt?: string
 }
 

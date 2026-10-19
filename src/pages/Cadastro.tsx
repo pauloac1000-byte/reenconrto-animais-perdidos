@@ -18,6 +18,7 @@ import {
   Trash2,
   User,
   Heart,
+  Mail,
 } from 'lucide-react'
 import type {
   AnimalCadastro,
@@ -59,6 +60,7 @@ interface FormErrors {
   contato?: string
   telefone?: string
   whatsapp?: string
+  emailAlertas?: string
 }
 
 export default function Cadastro() {
@@ -97,6 +99,7 @@ export default function Cadastro() {
   )
   const [nomePessoa, setNomePessoa] = useState<string>(dadosIniciaisState?.nomePessoa || '')
   const [nomePet, setNomePet] = useState<string>(dadosIniciaisState?.nomePet || '')
+  const [emailAlertas, setEmailAlertas] = useState<string>(dadosIniciaisState?.emailAlertas || '')
   const [caracteristicas, setCaracteristicas] = useState<string>(
     dadosIniciaisState?.caracteristicas || '',
   )
@@ -226,6 +229,13 @@ export default function Cadastro() {
       newErrors.whatsapp = 'Inclua o DDD. Exemplo: (19) 99999-9999'
     }
 
+    if (emailAlertas.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(emailAlertas.trim())) {
+        newErrors.emailAlertas = 'Por favor, insira um endereço de e-mail válido.'
+      }
+    }
+
     setErrors(newErrors)
 
     if (Object.keys(newErrors).length > 0) {
@@ -255,6 +265,7 @@ export default function Cadastro() {
       data,
       nomePessoa: nomePessoa.trim() || undefined,
       nomePet: nomePet.trim() || undefined,
+      emailAlertas: emailAlertas.trim() || undefined,
       caracteristicas: caracteristicas.trim() || undefined,
       descricao: descricao.trim() || undefined,
       telefone: telefone.trim() || undefined,
@@ -837,6 +848,45 @@ export default function Cadastro() {
             <div className="flex items-center gap-1.5 text-xs text-[#e03e3e] mt-1.5">
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>{errors.contato}</span>
+            </div>
+          )}
+        </div>
+
+        {/* 10. E-mail para receber alertas (Opcional, com texto de apoio exato) */}
+        <div className="space-y-1.5 pt-2 border-t border-[#e5e0d8]">
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor="email-alertas-input"
+              className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+            >
+              E-mail para receber alertas
+            </label>
+            <span className="text-xs text-[#6b6b6b]">Opcional</span>
+          </div>
+          <div className="relative">
+            <Mail className="w-4 h-4 text-[#6b6b6b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              id="email-alertas-input"
+              type="email"
+              autoComplete="email"
+              placeholder="exemplo@email.com"
+              value={emailAlertas}
+              onChange={(e) => {
+                setEmailAlertas(e.target.value)
+                setErrors((prev) => ({ ...prev, emailAlertas: undefined }))
+              }}
+              className={`w-full h-11 pl-10 pr-3.5 bg-white rounded-xl border text-sm text-[#2b2b2b] placeholder:text-[#6b6b6b]/60 focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all ${
+                errors.emailAlertas ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
+              }`}
+            />
+          </div>
+          <p className="text-xs text-[#6b6b6b]">
+            Avisamos se aparecer um animal parecido. Seu e-mail não aparece no site.
+          </p>
+          {errors.emailAlertas && (
+            <div className="flex items-center gap-1.5 text-xs text-[#e03e3e] mt-1 animate-fade-in">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{errors.emailAlertas}</span>
             </div>
           )}
         </div>

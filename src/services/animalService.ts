@@ -119,6 +119,9 @@ export async function atualizarAnimal(
     formData.append('whatsapp', dados.whatsapp || '')
     formData.append('nome_pessoa', dados.nomePessoa || '')
     formData.append('nome_pet', dados.nomePet || '')
+    if (dados.emailAlertas !== undefined) {
+      formData.append('email_alertas', dados.emailAlertas ? dados.emailAlertas.trim() : '')
+    }
 
     // Processamento de nova foto (se o usuário escolheu um novo arquivo)
     if (dados.fotoArquivo instanceof File) {
@@ -189,6 +192,9 @@ export async function criarAnimal(
     }
     if (dados.nomePet) {
       formData.append('nome_pet', dados.nomePet)
+    }
+    if (dados.emailAlertas) {
+      formData.append('email_alertas', dados.emailAlertas.trim())
     }
 
     // Processamento da foto: se tiver File anexado, usa diretamente;

@@ -39,6 +39,7 @@ export interface AnimalRecord {
   whatsapp?: string
   nome_pessoa?: string
   nome_pet?: string
+  email_alertas?: string
   created: string
   updated: string
   collectionId: string
@@ -68,6 +69,7 @@ export function recordToAnimal(record: AnimalRecord): AnimalCadastro {
     whatsapp: record.whatsapp || undefined,
     nomePessoa: record.nome_pessoa || undefined,
     nomePet: record.nome_pet || undefined,
+    // email_alertas é deliberadamente NÃO exposto em AnimalCadastro para clientes públicos
     createdAt: record.created,
   }
 }

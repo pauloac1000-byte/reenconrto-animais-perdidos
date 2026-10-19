@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T13:14:11.772Z",
+  "generatedAt": "2026-10-19T13:39:55.988Z",
   "collections": [
     {
       "name": "users",
@@ -161,6 +161,12 @@
           "type": "text",
           "required": false,
           "system": false
+        },
+        {
+          "name": "email_alertas",
+          "type": "email",
+          "required": false,
+          "system": false
         }
       ],
       "indexes": [
@@ -189,6 +195,88 @@
       "indexes": [
         "CREATE UNIQUE INDEX `idx_tokenKey_pbc_3841632486` ON `admins` (`tokenKey`)",
         "CREATE UNIQUE INDEX `idx_email_pbc_3841632486` ON `admins` (`email`) WHERE `email` != ''"
+      ]
+    },
+    {
+      "name": "alertas",
+      "type": "base",
+      "apiRules": {
+        "list": null,
+        "view": null,
+        "create": null,
+        "update": null,
+        "delete": null
+      },
+      "fields": [
+        {
+          "name": "origem_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "animais"
+        },
+        {
+          "name": "compativel_id",
+          "type": "relation",
+          "required": true,
+          "system": false,
+          "collectionRef": "animais"
+        },
+        {
+          "name": "porcentagem",
+          "type": "number",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "data_envio",
+          "type": "date",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "email_destinatario",
+          "type": "email",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "status",
+          "type": "select",
+          "required": true,
+          "system": false,
+          "selectValues": ["enviado", "erro"]
+        },
+        {
+          "name": "erro",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "par_chave",
+          "type": "text",
+          "required": false,
+          "system": false
+        },
+        {
+          "name": "created",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate"]
+        },
+        {
+          "name": "updated",
+          "type": "autodate",
+          "required": false,
+          "system": false,
+          "autodateTriggers": ["onCreate", "onUpdate"]
+        }
+      ],
+      "indexes": [
+        "CREATE INDEX idx_alertas_par_chave ON alertas (par_chave)",
+        "CREATE INDEX idx_alertas_created ON alertas (created DESC)"
       ]
     }
   ]

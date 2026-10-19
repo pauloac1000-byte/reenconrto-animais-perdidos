@@ -124,18 +124,30 @@ export default function Resumo() {
 
       // Inicia análise de compatibilidade cruzada via IA com o animal criado
       setEtapaSalvamento('Analisando compatibilidade com IA…')
+      let analise: AnaliseCompatibilidadeResultado | null = null
       try {
-        const analise = await analisarCompatibilidadeAnimal(animalCriado.id)
+        analise = await analisarCompatibilidadeAnimal(animalCriado.id)
         setResultadoCompatibilidade(analise)
       } catch (errAnalise) {
         console.error('Falha na análise de IA pós-cadastro:', errAnalise)
-        setResultadoCompatibilidade({
+        analise = {
           analisado: false,
           totalCandidatos: 0,
           compatibilidades: [],
           erro: 'A análise de compatibilidade não pôde ser concluída no momento.',
-        })
+        }
+        setResultadoCompatibilidade(analise)
       }
+
+      // Redireciona diretamente para a tela 'Possíveis correspondências' conforme especificação
+      navigate('/possiveis-correspondencias', {
+        replace: true,
+        state: {
+          animalPublicado: animalCriado,
+          animalId: animalCriado.id,
+          resultadoCompatibilidade: analise,
+        },
+      })
     } catch (err) {
       console.error('Erro ao salvar cadastro:', err)
       toast({

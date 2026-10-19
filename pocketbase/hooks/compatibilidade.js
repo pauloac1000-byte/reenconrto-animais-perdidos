@@ -37,33 +37,19 @@ routerAdd('POST', '/backend/v1/analisar-compatibilidade', (e) => {
     const tipoOposto = tipoRef === 'perdido' ? 'encontrado' : 'perdido'
     const especieRef = animalRef.getString('especie')
 
+    const refUf = animalRef.getString('uf') || ''
+
     // 2. Buscar candidatos do tipo oposto (excluindo qualquer animal com status 'reunido').
-    // Damos prioridade à mesma espécie primeiro, limitando aos mais recentes
+    // Especificação: animais do caminho oposto, da mesma espécie e da mesma UF
     let candidatos = []
     try {
-      candidatos = $app.findRecordsByFilter(
-        'animais',
-        `tipo = '${tipoOposto}' && tipo != 'reunido' && especie = '${especieRef}'`,
-        '-created',
-        15,
-        0,
-      )
+      let filterExp = `tipo = '${tipoOposto}' && tipo != 'reunido' && especie = '${especieRef}'`
+      if (refUf) {
+        filterExp += ` && uf = '${refUf}'`
+      }
+      candidatos = $app.findRecordsByFilter('animais', filterExp, '-created', 15, 0)
     } catch (_) {
       candidatos = []
-    }
-
-    // Se houver poucos da mesma espécie, podemos buscar outros do tipo oposto para cobrir eventuais enganos (excluindo 'reunido')
-    if (candidatos.length < 5) {
-      try {
-        const outros = $app.findRecordsByFilter(
-          'animais',
-          `tipo = '${tipoOposto}' && tipo != 'reunido' && especie != '${especieRef}'`,
-          '-created',
-          5,
-          0,
-        )
-        candidatos = candidatos.concat(outros)
-      } catch (_) {}
     }
 
     // Se não há candidatos no banco, retorna lista vazia imediatamente
@@ -107,7 +93,6 @@ routerAdd('POST', '/backend/v1/analisar-compatibilidade', (e) => {
       ? `${pbBaseUrl}/api/files/animais/${animalRef.id}/${fotoRefNome}`
       : 'Sem foto anexada'
 
-    const refUf = animalRef.getString('uf') || ''
     const refCidade = animalRef.getString('cidade') || ''
     const refLocalFormatado = refUf ? `${refCidade}, ${refUf}` : refCidade
 

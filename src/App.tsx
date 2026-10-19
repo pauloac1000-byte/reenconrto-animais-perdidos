@@ -10,6 +10,7 @@ import Cadastro from './pages/Cadastro'
 import Resumo from './pages/Resumo'
 import Animais from './pages/Animais'
 import AnimalDetalhe from './pages/AnimalDetalhe'
+import PossiveisCorrespondencias from './pages/PossiveisCorrespondencias'
 import AdminLogin from './pages/AdminLogin'
 import NotFound from './pages/NotFound'
 import Layout from './components/Layout'
@@ -26,6 +27,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/cadastro" element={<Cadastro />} />
               <Route path="/resumo" element={<Resumo />} />
+              <Route path="/possiveis-correspondencias" element={<PossiveisCorrespondencias />} />
               <Route path="/animais" element={<Animais />} />
               <Route path="/animal/:id" element={<AnimalDetalhe />} />
               <Route path="/admin" element={<AdminLogin />} />

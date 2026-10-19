@@ -161,6 +161,7 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
             <MapPin className="w-4 h-4 text-[#2d8f6f] shrink-0 mt-0.5" />
             <span className="font-medium leading-tight">
               {animal.bairro}, {animal.cidade}
+              {animal.uf ? `, ${animal.uf}` : ''}
             </span>
           </div>
 

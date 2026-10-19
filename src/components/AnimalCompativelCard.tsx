@@ -166,6 +166,7 @@ export const AnimalCompativelCard: React.FC<AnimalCompativelCardProps> = ({ item
               <MapPin className="w-3.5 h-3.5 text-[#2d8f6f]" />
               <strong className="text-[#2b2b2b]">
                 {animal.bairro}, {animal.cidade}
+                {animal.uf ? `, ${animal.uf}` : ''}
               </strong>
             </span>
             <span>•</span>

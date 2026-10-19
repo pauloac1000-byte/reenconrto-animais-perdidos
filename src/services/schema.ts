@@ -30,6 +30,7 @@ export interface AnimalRecord {
   porte: string
   cor: string
   caracteristicas?: string
+  uf?: string
   cidade: string
   bairro: string
   data: string
@@ -57,6 +58,7 @@ export function recordToAnimal(record: AnimalRecord): AnimalCadastro {
     especie: record.especie as AnimalCadastro['especie'],
     porte: record.porte as AnimalCadastro['porte'],
     cor: record.cor as AnimalCadastro['cor'],
+    uf: record.uf || undefined,
     cidade: record.cidade,
     bairro: record.bairro,
     data: record.data,

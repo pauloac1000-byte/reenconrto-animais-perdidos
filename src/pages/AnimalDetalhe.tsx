@@ -281,11 +281,13 @@ export default function AnimalDetalhe() {
     setTimeout(() => setSucessoMensagem(null), 4000)
   }
 
+  const localFormatado = animal.uf ? `${animal.cidade}, ${animal.uf}` : animal.cidade
+
   // Mensagem pré-formatada para WhatsApp
   const mensagemWhatsApp = encodeURIComponent(
     isPerdido
-      ? `Olá! Vi o cadastro do pet ${animal.nomePet || animal.especie} (${animal.bairro}, ${animal.cidade}) no site Reencontro e gostaria de informações!`
-      : `Olá! Vi o animal cadastrado em busca do dono (${animal.especie}, ${animal.bairro}, ${animal.cidade}) no site Reencontro e gostaria de falar com você!`,
+      ? `Olá! Vi o cadastro do pet ${animal.nomePet || animal.especie} (${animal.bairro}, ${localFormatado}) no site Reencontro e gostaria de informações!`
+      : `Olá! Vi o animal cadastrado em busca do dono (${animal.especie}, ${animal.bairro}, ${localFormatado}) no site Reencontro e gostaria de falar com você!`,
   )
 
   const temContatos = Boolean(animal.whatsapp || animal.telefone)
@@ -547,6 +549,7 @@ export default function AnimalDetalhe() {
               <MapPin className="w-4 h-4 text-[#2d8f6f] shrink-0" />
               <span>
                 {animal.bairro}, {animal.cidade}
+                {animal.uf ? `, ${animal.uf}` : ''}
               </span>
             </p>
           </div>
@@ -632,14 +635,15 @@ export default function AnimalDetalhe() {
                 </span>
               </div>
 
-              {/* Cidade */}
+              {/* Cidade e UF */}
               <div className="p-3.5 rounded-xl bg-[#faf7f2] border border-[#e5e0d8]">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[#6b6b6b] block flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-[#2d8f6f]" />
-                  Cidade
+                  Cidade e UF
                 </span>
                 <span className="text-sm sm:text-base font-semibold text-[#2b2b2b] mt-0.5 block">
                   {animal.cidade}
+                  {animal.uf ? `, ${animal.uf}` : ''}
                 </span>
               </div>
 

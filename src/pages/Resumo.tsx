@@ -91,6 +91,7 @@ export default function Resumo() {
         especie: animal.especie,
         porte: animal.porte,
         cor: animal.cor,
+        uf: animal.uf,
         cidade: animal.cidade,
         bairro: animal.bairro,
         data: animal.data,
@@ -335,6 +336,7 @@ export default function Resumo() {
               <span className="font-medium text-[#2b2b2b]">Porte {animal.porte} • </span>
             )}
             {animal.bairro}, {animal.cidade}
+            {animal.uf ? `, ${animal.uf}` : ''}
           </p>
         </div>
 
@@ -405,6 +407,7 @@ export default function Resumo() {
               </span>
               <span className="text-sm font-semibold text-[#2b2b2b] mt-0.5 block">
                 {animal.bairro}, {animal.cidade}
+                {animal.uf ? `, ${animal.uf}` : ''}
               </span>
             </div>
 

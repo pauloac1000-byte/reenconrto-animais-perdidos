@@ -107,13 +107,18 @@ routerAdd('POST', '/backend/v1/analisar-compatibilidade', (e) => {
       ? `${pbBaseUrl}/api/files/animais/${animalRef.id}/${fotoRefNome}`
       : 'Sem foto anexada'
 
+    const refUf = animalRef.getString('uf') || ''
+    const refCidade = animalRef.getString('cidade') || ''
+    const refLocalFormatado = refUf ? `${refCidade}, ${refUf}` : refCidade
+
     const refDados = {
       id: animalRef.id,
       tipo: tipoRef,
       especie: especieRef,
       porte: animalRef.getString('porte'),
       cor: animalRef.getString('cor'),
-      cidade: animalRef.getString('cidade'),
+      uf: refUf,
+      cidade: refCidade,
       bairro: animalRef.getString('bairro'),
       data: animalRef.getString('data'),
       caracteristicas: animalRef.getString('caracteristicas') || 'Não informadas',
@@ -134,7 +139,8 @@ routerAdd('POST', '/backend/v1/analisar-compatibilidade', (e) => {
         especie: cand.getString('especie'),
         porte: cand.getString('porte'),
         cor: cand.getString('cor'),
-        cidade: cand.getString('cidade'),
+        uf: cand.getString('uf') || '',
+        cidade: cand.getString('cidade') || '',
         bairro: cand.getString('bairro'),
         data: cand.getString('data'),
         caracteristicas: cand.getString('caracteristicas') || 'Não informadas',
@@ -155,14 +161,17 @@ ANIMAL RECÉM-CADASTRADO (${refDados.tipo.toUpperCase()}):
 - Cor predominante: ${refDados.cor}
 - Características marcantes: ${refDados.caracteristicas}
 - Descrição: ${refDados.descricao}
-- Localização: Bairro ${refDados.bairro}, Cidade ${refDados.cidade}
+- Localização: Bairro ${refDados.bairro}, Cidade ${refLocalFormatado} (UF: ${refDados.uf || 'N/A'}, Cidade: ${refDados.cidade})
 - Data do evento: ${refDados.data}
 - Foto: ${refDados.fotoUrl} (Arquivo: ${refDados.fotoArquivo})
 
 CANDIDATOS DO TIPO OPOSTO NO BANCO:
 ${JSON.stringify(candidatosPayload, null, 2)}
 
-Analise minuciosamente cada candidato comparando FOTO (aspectos visuais), CARACTERÍSTICAS (espécie, porte, cor, marcas) e LOCALIZAÇÃO (cidade, bairro, coerência de data).
+Critérios de análise:
+1. FOTO: características visuais.
+2. CARACTERÍSTICAS: espécie (essencial), porte, cor predominante e marcas.
+3. LOCALIZAÇÃO E TEMPO: avalie a proximidade geográfica usando UF e Cidade (mesma Cidade = pontuação máxima de proximidade; mesma UF = proximidade regional; UFs diferentes = improvável/baixa proximidade geográfica a menos que sejam cidades vizinhas na divisa), além de bairro e coerência de datas.
 Retorne estritamente um array JSON com id, porcentagem (0-100) e explicacao em português citando foto, características e localização.`
 
     // 5. Chamar o agente nativo Skip Cloud
@@ -222,6 +231,7 @@ Retorne estritamente um array JSON com id, porcentagem (0-100) e explicacao em p
         especie: c.getString('especie'),
         porte: c.getString('porte'),
         cor: c.getString('cor'),
+        uf: c.getString('uf') || '',
         cidade: c.getString('cidade'),
         bairro: c.getString('bairro'),
         data: c.getString('data'),

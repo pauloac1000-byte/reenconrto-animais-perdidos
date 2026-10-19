@@ -14,6 +14,7 @@ export interface AnimalCadastro {
   especie: EspecieAnimal
   porte: PorteAnimal
   cor: CorAnimal
+  uf?: string
   cidade: string
   bairro: string
   data: string // YYYY-MM-DD

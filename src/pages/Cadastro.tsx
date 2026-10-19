@@ -27,6 +27,8 @@ import type {
   TipoAnimal,
 } from '@/types/animal'
 import { usePets } from '@/context/PetContext'
+import { ESTADOS_BRASIL } from '@/services/ibgeService'
+import { CidadeCombobox } from '@/components/CidadeCombobox'
 
 const ESPECIES: { label: EspecieAnimal; icon: React.ElementType }[] = [
   { label: 'Cão', icon: Dog },
@@ -49,6 +51,7 @@ interface FormErrors {
   especie?: string
   porte?: string
   cor?: string
+  uf?: string
   cidade?: string
   bairro?: string
   data?: string
@@ -83,6 +86,7 @@ export default function Cadastro() {
   const [especie, setEspecie] = useState<EspecieAnimal | ''>(dadosIniciaisState?.especie || '')
   const [porte, setPorte] = useState<PorteAnimal | ''>(dadosIniciaisState?.porte || '')
   const [cor, setCor] = useState<CorAnimal | ''>(dadosIniciaisState?.cor || '')
+  const [uf, setUf] = useState<string>(dadosIniciaisState?.uf || '')
   const [cidade, setCidade] = useState<string>(dadosIniciaisState?.cidade || '')
   const [bairro, setBairro] = useState<string>(dadosIniciaisState?.bairro || '')
   const [data, setData] = useState<string>(
@@ -188,6 +192,9 @@ export default function Cadastro() {
     if (!cor) {
       newErrors.cor = 'Selecione a cor predominante do animal.'
     }
+    if (!uf) {
+      newErrors.uf = 'Selecione o estado (UF).'
+    }
     if (!cidade.trim()) {
       newErrors.cidade = 'O campo Cidade é obrigatório.'
     }
@@ -224,6 +231,7 @@ export default function Cadastro() {
       especie: especie as EspecieAnimal,
       porte: porte as PorteAnimal,
       cor: cor as CorAnimal,
+      uf,
       cidade: cidade.trim(),
       bairro: bairro.trim(),
       data,
@@ -496,39 +504,77 @@ export default function Cadastro() {
           </div>
         </div>
 
-        {/* 5. Cidade e Bairro (Lado a lado em desktop) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label
-              htmlFor="cidade-input"
-              className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
-            >
-              Cidade e UF <span className="text-[#e03e3e]">*</span>
-            </label>
-            <div className="relative">
-              <MapPin className="w-4 h-4 text-[#6b6b6b] absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                id="cidade-input"
-                type="text"
-                placeholder="Ex.: São Paulo/SP, Curitiba/PR"
+        {/* 5. Localização: UF, Cidade e Bairro */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+            {/* UF */}
+            <div className="sm:col-span-4 space-y-1.5">
+              <label
+                htmlFor="uf-select"
+                className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+              >
+                UF <span className="text-[#e03e3e]">*</span>
+              </label>
+              <div className="relative">
+                <MapPin className="w-4 h-4 text-[#6b6b6b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <select
+                  id="uf-select"
+                  value={uf}
+                  onChange={(e) => {
+                    const novaUf = e.target.value
+                    setUf(novaUf)
+                    setCidade('') // Tratar a troca de UF limpando a cidade escolhida
+                    setErrors((prev) => ({ ...prev, uf: undefined, cidade: undefined }))
+                  }}
+                  className={`w-full h-11 pl-10 pr-3.5 bg-white rounded-xl border text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all ${
+                    errors.uf ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
+                  }`}
+                >
+                  <option value="">Selecione o estado…</option>
+                  {ESTADOS_BRASIL.map((est) => (
+                    <option key={est.sigla} value={est.sigla}>
+                      {est.sigla} — {est.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {errors.uf && (
+                <div className="flex items-center gap-1.5 text-xs text-[#e03e3e] mt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{errors.uf}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Cidade com autocomplete do IBGE */}
+            <div className="sm:col-span-8 space-y-1.5">
+              <label
+                htmlFor="cidade-combobox"
+                className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+              >
+                Cidade <span className="text-[#e03e3e]">*</span>
+              </label>
+              <CidadeCombobox
+                id="cidade-combobox"
+                uf={uf}
                 value={cidade}
-                onChange={(e) => {
-                  setCidade(e.target.value)
+                onChange={(cidadeEscolhida) => {
+                  setCidade(cidadeEscolhida)
                   setErrors((prev) => ({ ...prev, cidade: undefined }))
                 }}
-                className={`w-full h-11 pl-10 pr-3.5 bg-white rounded-xl border text-sm text-[#2b2b2b] placeholder:text-[#6b6b6b]/60 focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all ${
-                  errors.cidade ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
-                }`}
+                error={Boolean(errors.cidade)}
+                placeholder={uf ? 'Digite para buscar o município…' : 'Escolha a UF acima primeiro'}
               />
+              {errors.cidade && (
+                <div className="flex items-center gap-1.5 text-xs text-[#e03e3e] mt-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{errors.cidade}</span>
+                </div>
+              )}
             </div>
-            {errors.cidade && (
-              <div className="flex items-center gap-1.5 text-xs text-[#e03e3e] mt-1">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>{errors.cidade}</span>
-              </div>
-            )}
           </div>
 
+          {/* Bairro mantido exatamente como está */}
           <div className="space-y-1.5">
             <label
               htmlFor="bairro-input"
@@ -539,7 +585,7 @@ export default function Cadastro() {
             <input
               id="bairro-input"
               type="text"
-              placeholder="Ex.: Pinheiros, Copacabana, Savassi"
+              placeholder="Ex.: Pinheiros, Copacabana, Savassi, Centro"
               value={bairro}
               onChange={(e) => {
                 setBairro(e.target.value)

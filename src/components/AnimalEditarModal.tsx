@@ -27,6 +27,8 @@ import type {
   CorAnimal,
   TipoAnimal,
 } from '@/types/animal'
+import { ESTADOS_BRASIL } from '@/services/ibgeService'
+import { CidadeCombobox } from '@/components/CidadeCombobox'
 
 const ESPECIES: { label: EspecieAnimal; icon: React.ElementType }[] = [
   { label: 'Cão', icon: Dog },
@@ -49,6 +51,7 @@ interface FormErrors {
   especie?: string
   porte?: string
   cor?: string
+  uf?: string
   cidade?: string
   bairro?: string
   data?: string
@@ -79,6 +82,7 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
   const [especie, setEspecie] = useState<EspecieAnimal | ''>(animal.especie)
   const [porte, setPorte] = useState<PorteAnimal | ''>(animal.porte)
   const [cor, setCor] = useState<CorAnimal | ''>(animal.cor)
+  const [uf, setUf] = useState<string>(animal.uf || '')
   const [cidade, setCidade] = useState<string>(animal.cidade)
   const [bairro, setBairro] = useState<string>(animal.bairro)
   const [data, setData] = useState<string>(animal.data)
@@ -103,6 +107,7 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
       setEspecie(animal.especie)
       setPorte(animal.porte)
       setCor(animal.cor)
+      setUf(animal.uf || '')
       setCidade(animal.cidade)
       setBairro(animal.bairro)
       setData(animal.data)
@@ -188,6 +193,9 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
     if (!cor) {
       newErrors.cor = 'Selecione a cor predominante do animal.'
     }
+    if (!uf) {
+      newErrors.uf = 'Selecione o estado (UF).'
+    }
     if (!cidade.trim()) {
       newErrors.cidade = 'O campo Cidade é obrigatório.'
     }
@@ -218,6 +226,7 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
         especie: especie as EspecieAnimal,
         porte: porte as PorteAnimal,
         cor: cor as CorAnimal,
+        uf,
         cidade: cidade.trim(),
         bairro: bairro.trim(),
         data,
@@ -531,96 +540,135 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
             </div>
           </div>
 
-          {/* 5. Cidade, Bairro e Data */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-cidade"
-                className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
-              >
-                Cidade e UF <span className="text-[#e03e3e]">*</span>
-              </label>
-              <div className="relative">
-                <MapPin className="w-4 h-4 text-[#6b6b6b] absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  id="edit-cidade"
-                  type="text"
-                  placeholder="Ex.: São Paulo/SP"
+          {/* 5. UF, Cidade, Bairro e Data */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4">
+              {/* UF */}
+              <div className="sm:col-span-4 space-y-1.5">
+                <label
+                  htmlFor="edit-uf"
+                  className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+                >
+                  UF <span className="text-[#e03e3e]">*</span>
+                </label>
+                <div className="relative">
+                  <MapPin className="w-4 h-4 text-[#6b6b6b] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <select
+                    id="edit-uf"
+                    value={uf}
+                    onChange={(e) => {
+                      const novaUf = e.target.value
+                      setUf(novaUf)
+                      setCidade('') // Tratar troca de UF limpando a cidade
+                      setErrors((prev) => ({ ...prev, uf: undefined, cidade: undefined }))
+                    }}
+                    className={`w-full h-11 pl-9 pr-3 bg-white rounded-xl border text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] transition-all ${
+                      errors.uf ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
+                    }`}
+                  >
+                    <option value="">Selecione…</option>
+                    {ESTADOS_BRASIL.map((est) => (
+                      <option key={est.sigla} value={est.sigla}>
+                        {est.sigla} — {est.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {errors.uf && (
+                  <div className="flex items-center gap-1 text-[11px] text-[#e03e3e]">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{errors.uf}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Cidade com autocomplete do IBGE */}
+              <div className="sm:col-span-8 space-y-1.5">
+                <label
+                  htmlFor="edit-cidade-combobox"
+                  className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+                >
+                  Cidade <span className="text-[#e03e3e]">*</span>
+                </label>
+                <CidadeCombobox
+                  id="edit-cidade-combobox"
+                  uf={uf}
                   value={cidade}
-                  onChange={(e) => {
-                    setCidade(e.target.value)
+                  onChange={(cidadeEscolhida) => {
+                    setCidade(cidadeEscolhida)
                     setErrors((prev) => ({ ...prev, cidade: undefined }))
                   }}
-                  className={`w-full h-10 pl-9 pr-3 bg-white rounded-xl border text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] transition-all ${
-                    errors.cidade ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
-                  }`}
+                  error={Boolean(errors.cidade)}
+                  placeholder={uf ? 'Digite para buscar o município…' : 'Selecione a UF primeiro'}
                 />
+                {errors.cidade && (
+                  <div className="flex items-center gap-1 text-[11px] text-[#e03e3e]">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{errors.cidade}</span>
+                  </div>
+                )}
               </div>
-              {errors.cidade && (
-                <div className="flex items-center gap-1 text-[11px] text-[#e03e3e]">
-                  <AlertCircle className="w-3 h-3 shrink-0" />
-                  <span>{errors.cidade}</span>
-                </div>
-              )}
             </div>
 
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-bairro"
-                className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
-              >
-                Bairro <span className="text-[#e03e3e]">*</span>
-              </label>
-              <input
-                id="edit-bairro"
-                type="text"
-                placeholder="Ex.: Pinheiros"
-                value={bairro}
-                onChange={(e) => {
-                  setBairro(e.target.value)
-                  setErrors((prev) => ({ ...prev, bairro: undefined }))
-                }}
-                className={`w-full h-10 px-3 bg-white rounded-xl border text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] transition-all ${
-                  errors.bairro ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
-                }`}
-              />
-              {errors.bairro && (
-                <div className="flex items-center gap-1 text-[11px] text-[#e03e3e]">
-                  <AlertCircle className="w-3 h-3 shrink-0" />
-                  <span>{errors.bairro}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                htmlFor="edit-data"
-                className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
-              >
-                Data <span className="text-[#e03e3e]">*</span>
-              </label>
-              <div className="relative">
-                <CalendarIcon className="w-4 h-4 text-[#6b6b6b] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="edit-bairro"
+                  className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+                >
+                  Bairro <span className="text-[#e03e3e]">*</span>
+                </label>
                 <input
-                  id="edit-data"
-                  type="date"
-                  value={data}
+                  id="edit-bairro"
+                  type="text"
+                  placeholder="Ex.: Pinheiros, Centro"
+                  value={bairro}
                   onChange={(e) => {
-                    setData(e.target.value)
-                    setErrors((prev) => ({ ...prev, data: undefined }))
+                    setBairro(e.target.value)
+                    setErrors((prev) => ({ ...prev, bairro: undefined }))
                   }}
-                  max={new Date().toISOString().split('T')[0]}
-                  className={`w-full h-10 pl-9 pr-3 bg-white rounded-xl border text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] transition-all ${
-                    errors.data ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
+                  className={`w-full h-11 px-3.5 bg-white rounded-xl border text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] transition-all ${
+                    errors.bairro ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
                   }`}
                 />
+                {errors.bairro && (
+                  <div className="flex items-center gap-1 text-[11px] text-[#e03e3e]">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{errors.bairro}</span>
+                  </div>
+                )}
               </div>
-              {errors.data && (
-                <div className="flex items-center gap-1 text-[11px] text-[#e03e3e]">
-                  <AlertCircle className="w-3 h-3 shrink-0" />
-                  <span>{errors.data}</span>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="edit-data"
+                  className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+                >
+                  Data <span className="text-[#e03e3e]">*</span>
+                </label>
+                <div className="relative">
+                  <CalendarIcon className="w-4 h-4 text-[#6b6b6b] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    id="edit-data"
+                    type="date"
+                    value={data}
+                    onChange={(e) => {
+                      setData(e.target.value)
+                      setErrors((prev) => ({ ...prev, data: undefined }))
+                    }}
+                    max={new Date().toISOString().split('T')[0]}
+                    className={`w-full h-11 pl-9 pr-3.5 bg-white rounded-xl border text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] transition-all ${
+                      errors.data ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
+                    }`}
+                  />
                 </div>
-              )}
+                {errors.data && (
+                  <div className="flex items-center gap-1 text-[11px] text-[#e03e3e]">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{errors.data}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

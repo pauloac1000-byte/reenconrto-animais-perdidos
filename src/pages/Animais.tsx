@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { usePets } from '@/context/PetContext'
 import { AnimalCard } from '@/components/AnimalCard'
+import { ESTADOS_BRASIL, buscarMunicipiosPorUf } from '@/services/ibgeService'
 
 export default function Animais() {
   const { animais, isLoading, error, recarregarAnimais } = usePets()
@@ -25,22 +26,40 @@ export default function Animais() {
   // Filtros:
   // 1. Tipo: "todos" | "perdido" | "encontrado" | "reunido"
   // 2. Espécie: "todas" | EspecieAnimal
-  // 3. Cidade: "todas" | string
+  // 3. UF: "todas" | string (ex.: "SP")
+  // 4. Cidade: "todas" | string (filtrada dentro da UF selecionada pelo IBGE)
   const [filtroTipo, setFiltroTipo] = useState<string>('todos')
   const [filtroEspecie, setFiltroEspecie] = useState<string>('todas')
+  const [filtroUf, setFiltroUf] = useState<string>('todas')
   const [filtroCidade, setFiltroCidade] = useState<string>('todas')
+  const [municipiosFiltro, setMunicipiosFiltro] = useState<string[]>([])
+  const [carregandoMunicipios, setCarregandoMunicipios] = useState<boolean>(false)
 
-  // Lista única de cidades existentes nos animais para popular o dropdown
-  const cidadesDisponiveis = useMemo(() => {
-    const set = new Set<string>()
-    animais.forEach((a) => {
-      if (a.cidade) set.add(a.cidade)
-    })
-    return Array.from(set).sort()
-  }, [animais])
+  // Quando seleciona UF no filtro, carrega os municípios daquela UF pelo IBGE
+  useEffect(() => {
+    let ativo = true
+    if (filtroUf === 'todas') {
+      setMunicipiosFiltro([])
+      setCarregandoMunicipios(false)
+      return
+    }
 
-  // Filtragem combinada em tempo real:
-  // Animais "reunidos" ficam claramente no final da lista quando "todos" estiver selecionado
+    setCarregandoMunicipios(true)
+    buscarMunicipiosPorUf(filtroUf)
+      .then((lista) => {
+        if (!ativo) return
+        setMunicipiosFiltro(lista)
+      })
+      .finally(() => {
+        if (ativo) setCarregandoMunicipios(false)
+      })
+
+    return () => {
+      ativo = false
+    }
+  }, [filtroUf])
+
+  // Filtragem combinada em tempo real sobre os novos campos uf e cidade do banco
   const animaisFiltrados = useMemo(() => {
     const filtrados = animais.filter((animal) => {
       // Filtro Tipo
@@ -51,9 +70,19 @@ export default function Animais() {
       if (filtroEspecie !== 'todas' && animal.especie !== filtroEspecie) {
         return false
       }
+      // Filtro UF
+      if (filtroUf !== 'todas') {
+        const ufAnimal = (animal.uf || '').toUpperCase()
+        if (ufAnimal !== filtroUf.toUpperCase()) {
+          return false
+        }
+      }
       // Filtro Cidade
-      if (filtroCidade !== 'todas' && animal.cidade !== filtroCidade) {
-        return false
+      if (filtroCidade !== 'todas') {
+        const cidadeAnimal = (animal.cidade || '').trim().toLowerCase()
+        if (cidadeAnimal !== filtroCidade.trim().toLowerCase()) {
+          return false
+        }
       }
       return true
     })
@@ -68,7 +97,7 @@ export default function Animais() {
     }
 
     return filtrados
-  }, [animais, filtroTipo, filtroEspecie, filtroCidade])
+  }, [animais, filtroTipo, filtroEspecie, filtroUf, filtroCidade])
 
   const totalPerdidos = useMemo(() => animais.filter((a) => a.tipo === 'perdido').length, [animais])
   const totalEncontrados = useMemo(
@@ -80,11 +109,15 @@ export default function Animais() {
   const limparFiltros = () => {
     setFiltroTipo('todos')
     setFiltroEspecie('todas')
+    setFiltroUf('todas')
     setFiltroCidade('todas')
   }
 
   const temFiltroAtivo =
-    filtroTipo !== 'todos' || filtroEspecie !== 'todas' || filtroCidade !== 'todas'
+    filtroTipo !== 'todos' ||
+    filtroEspecie !== 'todas' ||
+    filtroUf !== 'todas' ||
+    filtroCidade !== 'todas'
 
   return (
     <div className="space-y-8 pb-12 animate-fade-in">
@@ -139,8 +172,8 @@ export default function Animais() {
           )}
         </div>
 
-        {/* 3 Dropdowns combináveis */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        {/* Dropdowns combináveis com os novos campos UF e Cidade */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Dropdown 1: Tipo */}
           <div className="space-y-1.5">
             <label
@@ -187,23 +220,61 @@ export default function Animais() {
             </select>
           </div>
 
-          {/* Dropdown 3: Cidade */}
+          {/* Dropdown 3: UF */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="filtro-uf"
+              className="text-xs font-semibold text-[#6b6b6b] flex items-center gap-1"
+            >
+              <MapPin className="w-3.5 h-3.5 text-[#2d8f6f]" />
+              UF (Estado)
+            </label>
+            <select
+              id="filtro-uf"
+              value={filtroUf}
+              onChange={(e) => {
+                const novaUf = e.target.value
+                setFiltroUf(novaUf)
+                setFiltroCidade('todas') // Limpa a cidade ao trocar de UF
+              }}
+              className="w-full h-11 px-3.5 bg-white rounded-xl border border-[#e5e0d8] text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all"
+            >
+              <option value="todas">Todos os estados</option>
+              {ESTADOS_BRASIL.map((est) => (
+                <option key={est.sigla} value={est.sigla}>
+                  {est.sigla} — {est.nome}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Dropdown 4: Cidade (filtrada pela UF do IBGE) */}
           <div className="space-y-1.5">
             <label
               htmlFor="filtro-cidade"
               className="text-xs font-semibold text-[#6b6b6b] flex items-center gap-1"
             >
               <MapPin className="w-3.5 h-3.5 text-[#2d8f6f]" />
-              Cidade
+              Cidade{' '}
+              {carregandoMunicipios && (
+                <span className="text-[10px] text-[#2d8f6f]">(carregando…)</span>
+              )}
             </label>
             <select
               id="filtro-cidade"
+              disabled={filtroUf === 'todas'}
               value={filtroCidade}
               onChange={(e) => setFiltroCidade(e.target.value)}
-              className="w-full h-11 px-3.5 bg-white rounded-xl border border-[#e5e0d8] text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all"
+              className="w-full h-11 px-3.5 bg-white rounded-xl border border-[#e5e0d8] text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all disabled:bg-[#f5f5f5] disabled:cursor-not-allowed disabled:text-[#9e9e9e]"
             >
-              <option value="todas">Todas as cidades</option>
-              {cidadesDisponiveis.map((cidade) => (
+              <option value="todas">
+                {filtroUf === 'todas'
+                  ? 'Selecione uma UF antes'
+                  : carregandoMunicipios
+                    ? 'Carregando cidades do IBGE…'
+                    : 'Todas as cidades'}
+              </option>
+              {municipiosFiltro.map((cidade) => (
                 <option key={cidade} value={cidade}>
                   {cidade}
                 </option>

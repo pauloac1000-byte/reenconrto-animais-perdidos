@@ -99,6 +99,9 @@ export async function atualizarAnimal(
     if (dados.cor !== undefined) {
       formData.append('cor', dados.cor)
     }
+    if (dados.uf !== undefined) {
+      formData.append('uf', dados.uf)
+    }
     if (dados.cidade !== undefined) {
       formData.append('cidade', dados.cidade)
     }
@@ -162,6 +165,9 @@ export async function criarAnimal(
     formData.append('especie', dados.especie)
     formData.append('porte', dados.porte)
     formData.append('cor', dados.cor)
+    if (dados.uf) {
+      formData.append('uf', dados.uf)
+    }
     formData.append('cidade', dados.cidade)
     formData.append('bairro', dados.bairro)
     formData.append('data', dados.data)

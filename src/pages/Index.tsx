@@ -55,6 +55,21 @@ export default function Index() {
           </div>
         </div>
 
+        {/* 3. Cão caramelo: reposicionado no canto inferior esquerdo do hero (sem sobrepor o papagaio nem colidir com cards) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-6 -left-6 sm:bottom-0 sm:left-0 md:bottom-2 md:left-3 z-0 select-none animate-pet-intro-3"
+        >
+          <div className="animate-pet-float-3">
+            <img
+              src={fotoCao}
+              alt=""
+              loading="eager"
+              className="w-28 sm:w-36 md:w-44 lg:w-52 h-auto max-h-[170px] sm:max-h-[200px] md:max-h-[240px] object-contain opacity-40 sm:opacity-50 md:opacity-55 transition-opacity duration-500 [filter:drop-shadow(0_8px_22px_rgba(244,155,79,0.28))_drop-shadow(0_2px_8px_rgba(45,143,111,0.18))]"
+            />
+          </div>
+        </div>
+
         {/* Bloco central do Hero (badge, título e descrição) */}
         <div className="max-w-2xl mx-auto space-y-4 relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#e5e0d8] text-xs font-semibold text-[#2d8f6f] shadow-2xs">
@@ -62,27 +77,9 @@ export default function Index() {
             <span>Unindo lares e corações em todo o Brasil</span>
           </div>
 
-          {/* Wrapper relativo para acomodar o cão caramelo ao lado esquerdo do título central */}
-          <div className="relative">
-            {/* 3. Cão caramelo: ao lado do título central, à esquerda */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute -left-8 sm:-left-16 md:-left-24 lg:-left-32 top-1/2 -translate-y-1/2 -z-10 select-none animate-pet-intro-3"
-            >
-              <div className="animate-pet-float-3">
-                <img
-                  src={fotoCao}
-                  alt=""
-                  loading="eager"
-                  className="w-24 sm:w-32 md:w-44 lg:w-52 h-auto max-h-[180px] sm:max-h-[210px] md:max-h-[260px] object-contain opacity-35 sm:opacity-45 md:opacity-50 transition-opacity duration-500 [filter:drop-shadow(0_8px_22px_rgba(244,155,79,0.25))_drop-shadow(0_2px_8px_rgba(45,143,111,0.16))]"
-                />
-              </div>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#2b2b2b] leading-[1.15] relative">
-              Perdeu ou encontrou um animal?
-            </h1>
-          </div>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#2b2b2b] leading-[1.15]">
+            Perdeu ou encontrou um animal?
+          </h1>
 
           <p className="text-base sm:text-lg text-[#6b6b6b] leading-relaxed max-w-xl mx-auto">
             Cadastre aqui e ajude a reunir um pet à sua família. Cada detalhe faz a diferença para

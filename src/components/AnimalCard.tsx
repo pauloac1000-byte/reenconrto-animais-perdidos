@@ -13,9 +13,16 @@ import {
   ShieldCheck,
   Check,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react'
 import { useAdminAuth } from '@/context/AdminAuthContext'
 import { usePets } from '@/context/PetContext'
+import {
+  formatarTelefoneExibicao,
+  gerarLinkWhatsApp,
+  gerarLinkLigacao,
+  isNumeroIncompleto,
+} from '@/lib/phoneUtils'
 
 interface AnimalCardProps {
   animal: AnimalCadastro
@@ -189,31 +196,93 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
             <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </span>
 
-          <div className="relative z-20 flex items-center gap-2">
-            {animal.whatsapp && (
-              <a
-                href={`https://wa.me/55${animal.whatsapp.replace(/\D/g, '')}`}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#28a745] hover:text-[#237a5e] bg-white border border-[#28a745]/30 px-2.5 py-1 rounded-md shadow-2xs hover:bg-[#e8f5e9] transition-colors"
-                title={`WhatsApp: ${animal.whatsapp}`}
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>{animal.whatsapp}</span>
-              </a>
-            )}
-            {!animal.whatsapp && animal.telefone && (
-              <a
-                href={`tel:${animal.telefone.replace(/\D/g, '')}`}
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-[#2d8f6f] hover:text-[#237a5e] bg-white border border-[#2d8f6f]/30 px-2.5 py-1 rounded-md shadow-2xs hover:bg-[#e8f5e9] transition-colors"
-                title={`Ligar: ${animal.telefone}`}
-              >
-                <Phone className="w-3.5 h-3.5" />
-                <span>{animal.telefone}</span>
-              </a>
-            )}
+          <div className="relative z-20 flex flex-wrap items-center gap-2">
+            {animal.whatsapp &&
+              (() => {
+                const link = gerarLinkWhatsApp(animal.whatsapp)
+                const formatado = formatarTelefoneExibicao(animal.whatsapp)
+                const incompleto = isNumeroIncompleto(animal.whatsapp)
+
+                return (
+                  <div className="inline-flex items-center gap-1.5">
+                    {link ? (
+                      <a
+                        href={link}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#28a745] hover:text-[#237a5e] bg-white border border-[#28a745]/30 px-2.5 py-1 rounded-md shadow-2xs hover:bg-[#e8f5e9] transition-colors"
+                        title={`WhatsApp: ${formatado}`}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>{formatado}</span>
+                      </a>
+                    ) : (
+                      <span
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[#6b6b6b] bg-white border border-[#e5e0d8] px-2.5 py-1 rounded-md"
+                        title={`WhatsApp: ${formatado}`}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 text-[#28a745]" />
+                        <span>{formatado}</span>
+                      </span>
+                    )}
+                    {isAdmin && incompleto && (
+                      <span
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300"
+                        title="Aviso visível apenas para o administrador: o número cadastrado tem menos de 10 dígitos."
+                      >
+                        <AlertTriangle className="w-3 h-3 text-amber-700" />
+                        <span>número incompleto</span>
+                      </span>
+                    )}
+                  </div>
+                )
+              })()}
+
+            {!animal.whatsapp &&
+              animal.telefone &&
+              (() => {
+                const link = gerarLinkLigacao(animal.telefone)
+                const formatado = formatarTelefoneExibicao(animal.telefone)
+                const incompleto = isNumeroIncompleto(animal.telefone)
+
+                return (
+                  <div className="inline-flex items-center gap-1.5">
+                    {link ? (
+                      <a
+                        href={link}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#2d8f6f] hover:text-[#237a5e] bg-white border border-[#2d8f6f]/30 px-2.5 py-1 rounded-md shadow-2xs hover:bg-[#e8f5e9] transition-colors"
+                        title={`Ligar: ${formatado}`}
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>{formatado}</span>
+                      </a>
+                    ) : (
+                      <span
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[#6b6b6b] bg-white border border-[#e5e0d8] px-2.5 py-1 rounded-md"
+                        title={`Telefone: ${formatado}`}
+                      >
+                        <Phone className="w-3.5 h-3.5 text-[#2d8f6f]" />
+                        <span>{formatado}</span>
+                      </span>
+                    )}
+                    {isAdmin && incompleto && (
+                      <span
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300"
+                        title="Aviso visível apenas para o administrador: o número cadastrado tem menos de 10 dígitos."
+                      >
+                        <AlertTriangle className="w-3 h-3 text-amber-700" />
+                        <span>número incompleto</span>
+                      </span>
+                    )}
+                  </div>
+                )
+              })()}
           </div>
         </div>
 

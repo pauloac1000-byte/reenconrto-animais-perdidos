@@ -17,9 +17,12 @@ import {
   HelpCircle,
   User,
   Heart,
+  AlertTriangle,
 } from 'lucide-react'
 import type { AnimalCadastro, AnaliseCompatibilidadeResultado } from '@/types/animal'
 import { usePets } from '@/context/PetContext'
+import { useAdminAuth } from '@/context/AdminAuthContext'
+import { formatarTelefoneExibicao, isNumeroIncompleto } from '@/lib/phoneUtils'
 import { useToast } from '@/hooks/use-toast'
 import { analisarCompatibilidadeAnimal } from '@/services/animalService'
 import { AnimalCompativelCard } from '@/components/AnimalCompativelCard'
@@ -28,6 +31,7 @@ export default function Resumo() {
   const location = useLocation()
   const navigate = useNavigate()
   const { toast } = useToast()
+  const { isAdmin } = useAdminAuth()
   const { adicionarAnimal, setCadastroEmAndamento } = usePets()
   const [salvando, setSalvando] = useState(false)
   const [etapaSalvamento, setEtapaSalvamento] = useState<string>('')
@@ -449,18 +453,48 @@ export default function Resumo() {
               Formas de contato cadastradas
             </span>
             <div className="flex flex-wrap items-center gap-4 pt-1">
-              {animal.telefone && (
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#2b2b2b]">
-                  <Phone className="w-4 h-4 text-[#2d8f6f]" />
-                  <span>Telefone: {animal.telefone}</span>
-                </div>
-              )}
-              {animal.whatsapp && (
-                <div className="flex items-center gap-2 text-sm font-semibold text-[#28a745]">
-                  <MessageSquare className="w-4 h-4 text-[#28a745]" />
-                  <span>WhatsApp: {animal.whatsapp}</span>
-                </div>
-              )}
+              {animal.telefone &&
+                (() => {
+                  const formatado = formatarTelefoneExibicao(animal.telefone)
+                  const incompleto = isNumeroIncompleto(animal.telefone)
+
+                  return (
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#2b2b2b]">
+                      <Phone className="w-4 h-4 text-[#2d8f6f]" />
+                      <span>Telefone: {formatado}</span>
+                      {isAdmin && incompleto && (
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300"
+                          title="Aviso visível apenas para o administrador: o número cadastrado tem menos de 10 dígitos."
+                        >
+                          <AlertTriangle className="w-3 h-3 text-amber-700" />
+                          <span>número incompleto</span>
+                        </span>
+                      )}
+                    </div>
+                  )
+                })()}
+              {animal.whatsapp &&
+                (() => {
+                  const formatado = formatarTelefoneExibicao(animal.whatsapp)
+                  const incompleto = isNumeroIncompleto(animal.whatsapp)
+
+                  return (
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[#28a745]">
+                      <MessageSquare className="w-4 h-4 text-[#28a745]" />
+                      <span>WhatsApp: {formatado}</span>
+                      {isAdmin && incompleto && (
+                        <span
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300"
+                          title="Aviso visível apenas para o administrador: o número cadastrado tem menos de 10 dígitos."
+                        >
+                          <AlertTriangle className="w-3 h-3 text-amber-700" />
+                          <span>número incompleto</span>
+                        </span>
+                      )}
+                    </div>
+                  )
+                })()}
             </div>
           </div>
         </div>

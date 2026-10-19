@@ -29,6 +29,7 @@ import type {
 } from '@/types/animal'
 import { ESTADOS_BRASIL } from '@/services/ibgeService'
 import { CidadeCombobox } from '@/components/CidadeCombobox'
+import { aplicarMascaraTelefone, apenasDigitos } from '@/lib/phoneUtils'
 
 const ESPECIES: { label: EspecieAnimal; icon: React.ElementType }[] = [
   { label: 'Cão', icon: Dog },
@@ -56,6 +57,8 @@ interface FormErrors {
   bairro?: string
   data?: string
   contato?: string
+  telefone?: string
+  whatsapp?: string
 }
 
 interface AnimalEditarModalProps {
@@ -90,8 +93,12 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
   const [nomePet, setNomePet] = useState<string>(animal.nomePet || '')
   const [caracteristicas, setCaracteristicas] = useState<string>(animal.caracteristicas || '')
   const [descricao, setDescricao] = useState<string>(animal.descricao || '')
-  const [telefone, setTelefone] = useState<string>(animal.telefone || '')
-  const [whatsapp, setWhatsapp] = useState<string>(animal.whatsapp || '')
+  const [telefone, setTelefone] = useState<string>(
+    animal.telefone ? aplicarMascaraTelefone(animal.telefone) : '',
+  )
+  const [whatsapp, setWhatsapp] = useState<string>(
+    animal.whatsapp ? aplicarMascaraTelefone(animal.whatsapp) : '',
+  )
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [salvando, setSalvando] = useState<boolean>(false)
@@ -115,8 +122,8 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
       setNomePet(animal.nomePet || '')
       setCaracteristicas(animal.caracteristicas || '')
       setDescricao(animal.descricao || '')
-      setTelefone(animal.telefone || '')
-      setWhatsapp(animal.whatsapp || '')
+      setTelefone(animal.telefone ? aplicarMascaraTelefone(animal.telefone) : '')
+      setWhatsapp(animal.whatsapp ? aplicarMascaraTelefone(animal.whatsapp) : '')
       setErrors({})
     }
   }, [isOpen, animal])
@@ -205,8 +212,19 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
     if (!data.trim()) {
       newErrors.data = 'A data é obrigatória.'
     }
-    if (!telefone.trim() && !whatsapp.trim()) {
+    const digitosTelefone = apenasDigitos(telefone)
+    const digitosWhatsapp = apenasDigitos(whatsapp)
+
+    if (!digitosTelefone && !digitosWhatsapp) {
       newErrors.contato = 'Preencha pelo menos uma forma de contato (Telefone ou WhatsApp).'
+    }
+
+    if (digitosTelefone && digitosTelefone.length < 10) {
+      newErrors.telefone = 'Inclua o DDD. Exemplo: (19) 99999-9999'
+    }
+
+    if (digitosWhatsapp && digitosWhatsapp.length < 10) {
+      newErrors.whatsapp = 'Inclua o DDD. Exemplo: (19) 99999-9999'
     }
 
     setErrors(newErrors)
@@ -781,17 +799,28 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
                   <Phone className="w-4 h-4 text-[#6b6b6b] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="tel"
-                    placeholder="(11) 98765-4321"
+                    placeholder="(19) 99999-9999"
                     value={telefone}
                     onChange={(e) => {
-                      setTelefone(e.target.value)
-                      setErrors((prev) => ({ ...prev, contato: undefined }))
+                      const formatado = aplicarMascaraTelefone(e.target.value)
+                      setTelefone(formatado)
+                      setErrors((prev) => ({
+                        ...prev,
+                        contato: undefined,
+                        telefone: undefined,
+                      }))
                     }}
                     className={`w-full h-10 pl-9 pr-3 bg-white rounded-xl border text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] transition-all ${
-                      errors.contato ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
+                      errors.telefone || errors.contato ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
                     }`}
                   />
                 </div>
+                {errors.telefone && (
+                  <div className="flex items-center gap-1 text-[11px] text-[#e03e3e] mt-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{errors.telefone}</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -800,17 +829,28 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
                   <MessageSquare className="w-4 h-4 text-[#28a745] absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="tel"
-                    placeholder="(11) 98765-4321"
+                    placeholder="(19) 99999-9999"
                     value={whatsapp}
                     onChange={(e) => {
-                      setWhatsapp(e.target.value)
-                      setErrors((prev) => ({ ...prev, contato: undefined }))
+                      const formatado = aplicarMascaraTelefone(e.target.value)
+                      setWhatsapp(formatado)
+                      setErrors((prev) => ({
+                        ...prev,
+                        contato: undefined,
+                        whatsapp: undefined,
+                      }))
                     }}
                     className={`w-full h-10 pl-9 pr-3 bg-white rounded-xl border text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] transition-all ${
-                      errors.contato ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
+                      errors.whatsapp || errors.contato ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
                     }`}
                   />
                 </div>
+                {errors.whatsapp && (
+                  <div className="flex items-center gap-1 text-[11px] text-[#e03e3e] mt-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{errors.whatsapp}</span>
+                  </div>
+                )}
               </div>
             </div>
 

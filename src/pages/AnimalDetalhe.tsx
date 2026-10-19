@@ -19,8 +19,15 @@ import {
   CheckCircle,
   Edit3,
   Trash2,
+  AlertTriangle,
 } from 'lucide-react'
 import type { AnimalCadastro, AnimalCompativelItem } from '@/types/animal'
+import {
+  formatarTelefoneExibicao,
+  gerarLinkWhatsApp,
+  gerarLinkLigacao,
+  isNumeroIncompleto,
+} from '@/lib/phoneUtils'
 import { usePets } from '@/context/PetContext'
 import { useAdminAuth } from '@/context/AdminAuthContext'
 import { buscarAnimalPorId, analisarCompatibilidadeAnimal } from '@/services/animalService'
@@ -701,27 +708,77 @@ export default function AnimalDetalhe() {
 
             {temContatos ? (
               <div className="flex flex-wrap items-center gap-3 pt-1">
-                {animal.whatsapp && (
-                  <a
-                    href={`https://wa.me/55${animal.whatsapp.replace(/\D/g, '')}?text=${mensagemWhatsApp}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#28a745] hover:bg-[#218838] text-white px-5 py-3 rounded-[12px] font-semibold text-sm shadow-sm hover:shadow transition-all"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>Conversar no WhatsApp ({animal.whatsapp})</span>
-                  </a>
-                )}
+                {animal.whatsapp &&
+                  (() => {
+                    const link = gerarLinkWhatsApp(animal.whatsapp, mensagemWhatsApp)
+                    const formatado = formatarTelefoneExibicao(animal.whatsapp)
+                    const incompleto = isNumeroIncompleto(animal.whatsapp)
 
-                {animal.telefone && (
-                  <a
-                    href={`tel:${animal.telefone.replace(/\D/g, '')}`}
-                    className="inline-flex items-center gap-2 bg-white hover:bg-[#e8f5e9] text-[#2d8f6f] border-2 border-[#2d8f6f] px-5 py-2.5 rounded-[12px] font-semibold text-sm shadow-2xs hover:shadow transition-all"
-                  >
-                    <Phone className="w-4 h-4" />
-                    <span>Ligar ({animal.telefone})</span>
-                  </a>
-                )}
+                    return (
+                      <div className="inline-flex flex-wrap items-center gap-2">
+                        {link ? (
+                          <a
+                            href={link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 bg-[#28a745] hover:bg-[#218838] text-white px-5 py-3 rounded-[12px] font-semibold text-sm shadow-sm hover:shadow transition-all"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            <span>Conversar no WhatsApp ({formatado})</span>
+                          </a>
+                        ) : (
+                          <div className="inline-flex items-center gap-2 bg-white border border-[#e5e0d8] text-[#2b2b2b] px-4 py-3 rounded-[12px] text-sm">
+                            <MessageSquare className="w-4 h-4 text-[#28a745]" />
+                            <span>WhatsApp: {formatado}</span>
+                          </div>
+                        )}
+                        {isAdmin && incompleto && (
+                          <span
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300"
+                            title="Aviso visível apenas para o administrador: o número cadastrado tem menos de 10 dígitos."
+                          >
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
+                            <span>número incompleto</span>
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })()}
+
+                {animal.telefone &&
+                  (() => {
+                    const link = gerarLinkLigacao(animal.telefone)
+                    const formatado = formatarTelefoneExibicao(animal.telefone)
+                    const incompleto = isNumeroIncompleto(animal.telefone)
+
+                    return (
+                      <div className="inline-flex flex-wrap items-center gap-2">
+                        {link ? (
+                          <a
+                            href={link}
+                            className="inline-flex items-center gap-2 bg-white hover:bg-[#e8f5e9] text-[#2d8f6f] border-2 border-[#2d8f6f] px-5 py-2.5 rounded-[12px] font-semibold text-sm shadow-2xs hover:shadow transition-all"
+                          >
+                            <Phone className="w-4 h-4" />
+                            <span>Ligar ({formatado})</span>
+                          </a>
+                        ) : (
+                          <div className="inline-flex items-center gap-2 bg-white border border-[#e5e0d8] text-[#2b2b2b] px-4 py-2.5 rounded-[12px] text-sm">
+                            <Phone className="w-4 h-4 text-[#2d8f6f]" />
+                            <span>Telefone: {formatado}</span>
+                          </div>
+                        )}
+                        {isAdmin && incompleto && (
+                          <span
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300"
+                            title="Aviso visível apenas para o administrador: o número cadastrado tem menos de 10 dígitos."
+                          >
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-700" />
+                            <span>número incompleto</span>
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })()}
               </div>
             ) : (
               <div className="p-3 rounded-lg bg-white border border-[#e5e0d8] text-xs text-[#6b6b6b] italic">

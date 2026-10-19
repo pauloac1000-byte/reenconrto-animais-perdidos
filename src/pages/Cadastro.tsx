@@ -29,6 +29,7 @@ import type {
 import { usePets } from '@/context/PetContext'
 import { ESTADOS_BRASIL } from '@/services/ibgeService'
 import { CidadeCombobox } from '@/components/CidadeCombobox'
+import { aplicarMascaraTelefone, apenasDigitos } from '@/lib/phoneUtils'
 
 const ESPECIES: { label: EspecieAnimal; icon: React.ElementType }[] = [
   { label: 'Cão', icon: Dog },
@@ -56,6 +57,8 @@ interface FormErrors {
   bairro?: string
   data?: string
   contato?: string
+  telefone?: string
+  whatsapp?: string
 }
 
 export default function Cadastro() {
@@ -98,8 +101,12 @@ export default function Cadastro() {
     dadosIniciaisState?.caracteristicas || '',
   )
   const [descricao, setDescricao] = useState<string>(dadosIniciaisState?.descricao || '')
-  const [telefone, setTelefone] = useState<string>(dadosIniciaisState?.telefone || '')
-  const [whatsapp, setWhatsapp] = useState<string>(dadosIniciaisState?.whatsapp || '')
+  const [telefone, setTelefone] = useState<string>(
+    dadosIniciaisState?.telefone ? aplicarMascaraTelefone(dadosIniciaisState.telefone) : '',
+  )
+  const [whatsapp, setWhatsapp] = useState<string>(
+    dadosIniciaisState?.whatsapp ? aplicarMascaraTelefone(dadosIniciaisState.whatsapp) : '',
+  )
 
   const [errors, setErrors] = useState<FormErrors>({})
   const [dragActive, setDragActive] = useState<boolean>(false)
@@ -204,8 +211,19 @@ export default function Cadastro() {
     if (!data.trim()) {
       newErrors.data = 'A data é obrigatória.'
     }
-    if (!telefone.trim() && !whatsapp.trim()) {
+    const digitosTelefone = apenasDigitos(telefone)
+    const digitosWhatsapp = apenasDigitos(whatsapp)
+
+    if (!digitosTelefone && !digitosWhatsapp) {
       newErrors.contato = 'Preencha pelo menos uma forma de contato (Telefone ou WhatsApp).'
+    }
+
+    if (digitosTelefone && digitosTelefone.length < 10) {
+      newErrors.telefone = 'Inclua o DDD. Exemplo: (19) 99999-9999'
+    }
+
+    if (digitosWhatsapp && digitosWhatsapp.length < 10) {
+      newErrors.whatsapp = 'Inclua o DDD. Exemplo: (19) 99999-9999'
     }
 
     setErrors(newErrors)
@@ -760,17 +778,28 @@ export default function Cadastro() {
                 <Phone className="w-4 h-4 text-[#6b6b6b] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="tel"
-                  placeholder="(11) 98765-4321"
+                  placeholder="(19) 99999-9999"
                   value={telefone}
                   onChange={(e) => {
-                    setTelefone(e.target.value)
-                    setErrors((prev) => ({ ...prev, contato: undefined }))
+                    const formatado = aplicarMascaraTelefone(e.target.value)
+                    setTelefone(formatado)
+                    setErrors((prev) => ({
+                      ...prev,
+                      contato: undefined,
+                      telefone: undefined,
+                    }))
                   }}
                   className={`w-full h-11 pl-10 pr-3.5 bg-white rounded-xl border text-sm text-[#2b2b2b] placeholder:text-[#6b6b6b]/60 focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all ${
-                    errors.contato ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
+                    errors.telefone || errors.contato ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
                   }`}
                 />
               </div>
+              {errors.telefone && (
+                <div className="flex items-center gap-1.5 text-xs text-[#e03e3e] mt-1 animate-fade-in">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{errors.telefone}</span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -779,17 +808,28 @@ export default function Cadastro() {
                 <MessageSquare className="w-4 h-4 text-[#28a745] absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="tel"
-                  placeholder="(11) 98765-4321"
+                  placeholder="(19) 99999-9999"
                   value={whatsapp}
                   onChange={(e) => {
-                    setWhatsapp(e.target.value)
-                    setErrors((prev) => ({ ...prev, contato: undefined }))
+                    const formatado = aplicarMascaraTelefone(e.target.value)
+                    setWhatsapp(formatado)
+                    setErrors((prev) => ({
+                      ...prev,
+                      contato: undefined,
+                      whatsapp: undefined,
+                    }))
                   }}
                   className={`w-full h-11 pl-10 pr-3.5 bg-white rounded-xl border text-sm text-[#2b2b2b] placeholder:text-[#6b6b6b]/60 focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all ${
-                    errors.contato ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
+                    errors.whatsapp || errors.contato ? 'border-[#e03e3e]' : 'border-[#e5e0d8]'
                   }`}
                 />
               </div>
+              {errors.whatsapp && (
+                <div className="flex items-center gap-1.5 text-xs text-[#e03e3e] mt-1 animate-fade-in">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  <span>{errors.whatsapp}</span>
+                </div>
+              )}
             </div>
           </div>
 

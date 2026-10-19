@@ -271,6 +271,16 @@
     }
   }
 
+  @keyframes pet-float-slow-4 {
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-8px) rotate(-1.2deg);
+    }
+  }
+
   @keyframes pet-fade-intro {
     0% {
       opacity: 0;
@@ -294,6 +304,10 @@
     animation: pet-float-slow-3 7.2s ease-in-out infinite;
   }
 
+  .animate-pet-float-4 {
+    animation: pet-float-slow-4 7.6s ease-in-out infinite;
+  }
+
   .animate-pet-intro-1 {
     animation: pet-fade-intro 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards;
   }
@@ -306,15 +320,21 @@
     animation: pet-fade-intro 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.55s backwards;
   }
 
+  .animate-pet-intro-4 {
+    animation: pet-fade-intro 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.75s backwards;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-pet-float-1,
     .animate-pet-float-2,
-    .animate-pet-float-3 {
+    .animate-pet-float-3,
+    .animate-pet-float-4 {
       animation: none !important;
     }
     .animate-pet-intro-1,
     .animate-pet-intro-2,
-    .animate-pet-intro-3 {
+    .animate-pet-intro-3,
+    .animate-pet-intro-4 {
       animation: fade-in 0.3s ease-out backwards !important;
     }
   }

@@ -5,6 +5,7 @@ import { AnimalCard } from '@/components/AnimalCard'
 import fotoPapagaio from '@/assets/papagaio-verde-com-desvanecimento-transparente-0bc3b.png'
 import fotoGato from '@/assets/bob-o-gato-rajado-com-recorte-suave-069b8.png'
 import fotoCao from '@/assets/cachorro-caramelo-com-desvanecimento-transparente-7add9.png'
+import fotoCoelho from '@/assets/coelho-bege-blog-cobasi-1024x986-removebg-preview-15d5b.png'
 
 export default function Index() {
   const { animais, isLoading } = usePets()
@@ -21,7 +22,7 @@ export default function Index() {
         <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-[#f49b4f]/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* ======================================================== */}
-        {/* ANIMAIS DECORATIVOS NO FRAME HERO (Papagaio, Gato e Cão) */}
+        {/* ANIMAIS DECORATIVOS NO FRAME HERO (Papagaio, Gato, Cão e Coelho) */}
         {/* Camada z-0, pointer-events-none, sem sobrepor textos/cards */}
         {/* ======================================================== */}
 
@@ -63,6 +64,21 @@ export default function Index() {
           <div className="animate-pet-float-3">
             <img
               src={fotoCao}
+              alt=""
+              loading="eager"
+              className="w-28 sm:w-36 md:w-44 lg:w-52 h-auto max-h-[170px] sm:max-h-[200px] md:max-h-[240px] object-contain opacity-40 sm:opacity-50 md:opacity-55 transition-opacity duration-500 [filter:drop-shadow(0_8px_22px_rgba(244,155,79,0.28))_drop-shadow(0_2px_8px_rgba(45,143,111,0.18))]"
+            />
+          </div>
+        </div>
+
+        {/* 4. Coelho caramelo: canto inferior direito do hero (espelhado com o cão, sem sobrepor cards) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-6 -right-6 sm:bottom-0 sm:right-0 md:bottom-2 md:right-3 z-0 select-none animate-pet-intro-4"
+        >
+          <div className="animate-pet-float-4">
+            <img
+              src={fotoCoelho}
               alt=""
               loading="eager"
               className="w-28 sm:w-36 md:w-44 lg:w-52 h-auto max-h-[170px] sm:max-h-[200px] md:max-h-[240px] object-contain opacity-40 sm:opacity-50 md:opacity-55 transition-opacity duration-500 [filter:drop-shadow(0_8px_22px_rgba(244,155,79,0.28))_drop-shadow(0_2px_8px_rgba(45,143,111,0.18))]"

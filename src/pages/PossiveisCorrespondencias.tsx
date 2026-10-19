@@ -30,6 +30,7 @@ export default function PossiveisCorrespondencias() {
         animalPublicado?: AnimalCadastro
         animalId?: string
         resultadoCompatibilidade?: AnaliseCompatibilidadeResultado
+        linkGestao?: string
       }
     | undefined
 
@@ -217,6 +218,34 @@ export default function PossiveisCorrespondencias() {
 
   return (
     <div className="max-w-4xl mx-auto pb-16 animate-fade-in space-y-8">
+      {/* Link de gestão se presente no estado */}
+      {stateData?.linkGestao && (
+        <div className="bg-white rounded-[20px] border-2 border-[#2d8f6f]/30 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="text-xs font-bold text-[#2d8f6f] uppercase tracking-wider block">
+              Link de gestão do seu anúncio
+            </span>
+            <p className="text-xs sm:text-sm font-semibold text-[#d9534f]">
+              Guarde este link. Só ele permite alterar seu anúncio.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(stateData.linkGestao!)
+                alert('Link de gestão copiado!')
+              } catch {
+                /* intentionally ignored */
+              }
+            }}
+            className="shrink-0 px-4 py-2 rounded-[10px] bg-[#2d8f6f] hover:bg-[#237a5e] text-white text-xs font-bold transition-all shadow-sm"
+          >
+            Copiar link de gestão
+          </button>
+        </div>
+      )}
+
       {/* Banner de Confirmação de Cadastro */}
       <div className="bg-white rounded-[20px] border border-[#28a745]/30 p-6 sm:p-8 shadow-[0_4px_20px_rgba(40,167,69,0.08)] text-center space-y-3">
         <div className="w-14 h-14 mx-auto rounded-full bg-[#e8f5e9] text-[#28a745] flex items-center justify-center">

@@ -18,6 +18,8 @@ import {
   User,
   Heart,
   AlertTriangle,
+  Copy,
+  Key,
 } from 'lucide-react'
 import type { AnimalCadastro, AnaliseCompatibilidadeResultado } from '@/types/animal'
 import { usePets } from '@/context/PetContext'
@@ -38,6 +40,7 @@ export default function Resumo() {
   const [resultadoCompatibilidade, setResultadoCompatibilidade] =
     useState<AnaliseCompatibilidadeResultado | null>(null)
   const [animalPublicado, setAnimalPublicado] = useState<AnimalCadastro | null>(null)
+  const [copiadoGestao, setCopiadoGestao] = useState(false)
 
   // Dados recebidos via estado de navegação (location.state.animal)
   const animal = (location.state as { animal?: AnimalCadastro })?.animal
@@ -123,7 +126,7 @@ export default function Resumo() {
         duration: 4000,
       })
 
-      // Inicia análise de compatibilidade cruzada via IA com o animal criado
+      // Inicia análise de compatibilidade cruzada via IA com o animal criado em segundo plano
       setEtapaSalvamento('Analisando compatibilidade com IA…')
       let analise: AnaliseCompatibilidadeResultado | null = null
       try {
@@ -139,16 +142,8 @@ export default function Resumo() {
         }
         setResultadoCompatibilidade(analise)
       }
-
-      // Redireciona diretamente para a tela 'Possíveis correspondências' conforme especificação
-      navigate('/possiveis-correspondencias', {
-        replace: true,
-        state: {
-          animalPublicado: animalCriado,
-          animalId: animalCriado.id,
-          resultadoCompatibilidade: analise,
-        },
-      })
+      setSalvando(false)
+      setEtapaSalvamento('')
     } catch (err) {
       console.error('Erro ao salvar cadastro:', err)
       toast({
@@ -165,6 +160,31 @@ export default function Resumo() {
   if (animalPublicado && resultadoCompatibilidade) {
     const isPerdidoPublicado = animalPublicado.tipo === 'perdido'
     const totalCompatíveis = resultadoCompatibilidade.compatibilidades.length
+
+    // Link de gestão: URL completa da aplicação para gerenciar sem criar conta
+    const baseUrlApp =
+      window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+        ? window.location.origin
+        : 'https://reencontro-pets.goskip.app'
+    const linkGestaoCompleto = animalPublicado.codigoSecreto
+      ? `${baseUrlApp}/animal/${animalPublicado.id}?gestao=${encodeURIComponent(animalPublicado.codigoSecreto)}`
+      : `${baseUrlApp}/animal/${animalPublicado.id}`
+
+    const handleCopiarLinkGestao = async () => {
+      try {
+        await navigator.clipboard.writeText(linkGestaoCompleto)
+        setCopiadoGestao(true)
+        toast({
+          title: 'Link copiado!',
+          description: 'O link de gestão foi copiado para a área de transferência.',
+          className: 'bg-[#28a745] text-white border-0 shadow-lg',
+          duration: 3000,
+        })
+        setTimeout(() => setCopiadoGestao(false), 3000)
+      } catch {
+        // Fallback caso clipboard API falhe
+      }
+    }
 
     return (
       <div className="max-w-4xl mx-auto pb-16 animate-fade-in space-y-8">
@@ -186,6 +206,77 @@ export default function Resumo() {
               ? 'Nossa Inteligência Artificial já analisou os animais cadastrados como procura-se o dono no banco cruzando fotos, características e localização para você.'
               : 'Nossa Inteligência Artificial já analisou os animais perdidos no banco cruzando fotos, características e localização com o pet acolhido.'}
           </p>
+        </div>
+
+        {/* Requisito 1: Link de gestão com botão de copiar e aviso verbatim */}
+        <div className="bg-white rounded-[20px] border-2 border-[#2d8f6f]/30 p-6 sm:p-7 shadow-[0_4px_20px_rgba(45,143,111,0.08)] space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#e8f5e9] text-[#2d8f6f] flex items-center justify-center shrink-0 mt-0.5">
+              <Key className="w-5 h-5" />
+            </div>
+            <div className="space-y-1 flex-1">
+              <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#e8f5e9] text-[#2d8f6f] text-xs font-bold uppercase tracking-wider">
+                <span>Gestão sem conta</span>
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold text-[#2b2b2b]">Link de gestão</h2>
+              <p className="text-sm font-semibold text-[#d9534f]">
+                Guarde este link. Só ele permite alterar seu anúncio.
+              </p>
+              <p className="text-xs text-[#6b6b6b] leading-relaxed">
+                Com este link você poderá marcar o pet como reunido com a família ou atualizar seus
+                contatos a qualquer momento, sem precisar criar senha ou conta.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-[#faf7f2] border border-[#e5e0d8] rounded-[14px] p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="text-xs font-mono text-[#2b2b2b] break-all select-all flex-1 px-1">
+              {linkGestaoCompleto}
+            </div>
+            <button
+              type="button"
+              onClick={handleCopiarLinkGestao}
+              className={`shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[10px] text-xs sm:text-sm font-bold transition-all shadow-sm ${
+                copiadoGestao
+                  ? 'bg-[#28a745] text-white'
+                  : 'bg-[#2d8f6f] hover:bg-[#237a5e] text-white hover:shadow-md'
+              }`}
+            >
+              {copiadoGestao ? (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>Link copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  <span>Copiar link de gestão</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs text-[#6b6b6b]">
+            <span>
+              {animal.emailAlertas ? (
+                <span className="text-[#2d8f6f] font-medium">
+                  ✓ Enviamos uma cópia deste link também para o seu e-mail cadastrado (
+                  {animal.emailAlertas}).
+                </span>
+              ) : (
+                <span>Dica: adicione aos favoritos do seu navegador para não perder.</span>
+              )}
+            </span>
+            <a
+              href={linkGestaoCompleto}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 font-semibold text-[#2d8f6f] hover:underline"
+            >
+              <span>Testar link de gestão agora</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
         </div>
 
         {/* Seção de Análise de Compatibilidade por IA */}
@@ -285,13 +376,23 @@ export default function Resumo() {
               <span>Cadastrar outro animal</span>
             </Link>
 
-            <Link
-              to="/animais"
+            <button
+              type="button"
+              onClick={() => {
+                navigate('/possiveis-correspondencias', {
+                  state: {
+                    animalPublicado,
+                    animalId: animalPublicado.id,
+                    resultadoCompatibilidade,
+                    linkGestao: linkGestaoCompleto,
+                  },
+                })
+              }}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[10px] bg-[#2d8f6f] hover:bg-[#237a5e] text-white font-semibold text-sm shadow-md transition-all"
             >
-              <span>Ver todos os animais cadastrados</span>
+              <span>Ver possíveis correspondências ({totalCompatíveis})</span>
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>

@@ -1,4 +1,8 @@
-import type { AnimalCadastro, AnaliseCompatibilidadeResultado } from '@/types/animal'
+import type {
+  AnimalCadastro,
+  AnaliseCompatibilidadeResultado,
+  ValidacaoCodigoGestao,
+} from '@/types/animal'
 import pb from '@/lib/pocketbase/client'
 import { recordToAnimal, type AnimalRecord } from './schema'
 
@@ -215,6 +219,91 @@ export async function criarAnimal(
     return recordToAnimal(createdRecord)
   } catch (err) {
     console.error('Erro ao criar animal no PocketBase:', err)
+    throw err
+  }
+}
+
+/**
+ * Valida o código secreto de gestão para um determinado animal.
+ * Endpoint POST /backend/v1/validar-codigo
+ */
+export async function validarCodigoGestao(
+  animalId: string,
+  codigo: string,
+): Promise<ValidacaoCodigoGestao> {
+  try {
+    const res = await pb.send<ValidacaoCodigoGestao>('/backend/v1/validar-codigo', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ animalId, codigo }),
+    })
+    return res
+  } catch (err) {
+    console.error('Erro ao validar código de gestão:', err)
+    return { valido: false }
+  }
+}
+
+/**
+ * Marca o animal como reunido com a família usando o código de gestão (sem exigir conta de admin).
+ * Grava tipo='reunido' e data_reencontro no backend.
+ */
+export async function marcarReunidoComGestao(
+  animalId: string,
+  codigo: string,
+): Promise<{ sucesso: boolean; id: string; tipo: string; data_reencontro: string }> {
+  try {
+    const res = await pb.send<{
+      sucesso: boolean
+      id: string
+      tipo: string
+      data_reencontro: string
+    }>('/backend/v1/gestao/marcar-reunido', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ animalId, codigo }),
+    })
+    return res
+  } catch (err) {
+    console.error('Erro ao marcar animal como reunido com código de gestão:', err)
+    throw err
+  }
+}
+
+/**
+ * Atualiza os contatos (telefone, whatsapp, email_alertas) do animal usando o código de gestão.
+ */
+export async function editarContatoComGestao(
+  animalId: string,
+  codigo: string,
+  dados: { telefone?: string; whatsapp?: string; emailAlertas?: string },
+): Promise<{ sucesso: boolean; telefone: string; whatsapp: string; emailAlertas: string }> {
+  try {
+    const res = await pb.send<{
+      sucesso: boolean
+      telefone: string
+      whatsapp: string
+      emailAlertas: string
+    }>('/backend/v1/gestao/editar-contato', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        animalId,
+        codigo,
+        telefone: dados.telefone,
+        whatsapp: dados.whatsapp,
+        emailAlertas: dados.emailAlertas,
+      }),
+    })
+    return res
+  } catch (err) {
+    console.error('Erro ao atualizar contato com código de gestão:', err)
     throw err
   }
 }

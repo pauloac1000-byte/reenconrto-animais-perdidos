@@ -30,14 +30,21 @@ import {
 } from '@/lib/phoneUtils'
 import { usePets } from '@/context/PetContext'
 import { useAdminAuth } from '@/context/AdminAuthContext'
-import { buscarAnimalPorId, analisarCompatibilidadeAnimal } from '@/services/animalService'
+import {
+  buscarAnimalPorId,
+  analisarCompatibilidadeAnimal,
+  validarCodigoGestao,
+  marcarReunidoComGestao,
+  editarContatoComGestao,
+} from '@/services/animalService'
 import { AnimalCompativelCard } from '@/components/AnimalCompativelCard'
 import { AnimalEditarModal } from '@/components/AnimalEditarModal'
+import { AnimalEditarContatoModal } from '@/components/AnimalEditarContatoModal'
 
 export default function AnimalDetalhe() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { animais, marcarReunido, editarAnimal, removerAnimal } = usePets()
+  const { animais, marcarReunido, editarAnimal, removerAnimal, atualizarAnimalNaLista } = usePets()
   const { isAdmin } = useAdminAuth()
 
   const [animal, setAnimal] = useState<AnimalCadastro | null>(null)
@@ -47,6 +54,19 @@ export default function AnimalDetalhe() {
   const [copiado, setCopiado] = useState<boolean>(false)
   const [confirmandoReunido, setConfirmandoReunido] = useState<boolean>(false)
   const [salvandoReunido, setSalvandoReunido] = useState<boolean>(false)
+
+  // Gestão sem conta via ?gestao=<codigo>
+  const [codigoGestao, setCodigoGestao] = useState<string>('')
+  const [gestaoValida, setGestaoValida] = useState<boolean>(false)
+  const [dadosGestao, setDadosGestao] = useState<{
+    telefone?: string
+    whatsapp?: string
+    emailAlertas?: string
+  }>({})
+  const [modalEditarContatoAberto, setModalEditarContatoAberto] = useState<boolean>(false)
+  const [salvandoContatoGestao, setSalvandoContatoGestao] = useState<boolean>(false)
+  const [confirmandoReunidoGestao, setConfirmandoReunidoGestao] = useState<boolean>(false)
+  const [salvandoReunidoGestao, setSalvandoReunidoGestao] = useState<boolean>(false)
 
   // Funções administrativas: Edição e Exclusão
   const [modalEditarAberto, setModalEditarAberto] = useState<boolean>(false)
@@ -110,6 +130,47 @@ export default function AnimalDetalhe() {
       ativo = false
     }
   }, [id, animais])
+
+  // Validação do código de gestão via ?gestao=<codigo>
+  useEffect(() => {
+    let ativo = true
+    const searchParams = new URLSearchParams(window.location.search)
+    const cod = (searchParams.get('gestao') || '').trim()
+
+    if (!cod || !id) {
+      setGestaoValida(false)
+      setCodigoGestao('')
+      return
+    }
+
+    setCodigoGestao(cod)
+
+    async function validar() {
+      try {
+        const res = await validarCodigoGestao(id!, cod)
+        if (!ativo) return
+        if (res && res.valido) {
+          setGestaoValida(true)
+          setDadosGestao({
+            telefone: res.telefone,
+            whatsapp: res.whatsapp,
+            emailAlertas: res.emailAlertas,
+          })
+        } else {
+          setGestaoValida(false)
+        }
+      } catch (e) {
+        console.error('Erro na validação do link de gestão:', e)
+        if (ativo) setGestaoValida(false)
+      }
+    }
+
+    validar()
+
+    return () => {
+      ativo = false
+    }
+  }, [id])
 
   // Busca compatibilidade de forma transparente e não-bloqueante
   useEffect(() => {
@@ -234,6 +295,78 @@ export default function AnimalDetalhe() {
   const isPerdido = animal.tipo === 'perdido'
   const isReunido = animal.tipo === 'reunido'
 
+  // Ações de gestão sem conta via ?gestao=<codigo>
+  const handleMarcarComoReunidoGestao = async () => {
+    if (!animal || !codigoGestao) return
+    if (!confirmandoReunidoGestao) {
+      setConfirmandoReunidoGestao(true)
+      return
+    }
+
+    try {
+      setSalvandoReunidoGestao(true)
+      const res = await marcarReunidoComGestao(animal.id, codigoGestao)
+      setAnimal((prev) =>
+        prev
+          ? {
+              ...prev,
+              tipo: 'reunido',
+              dataReencontro: res.data_reencontro,
+            }
+          : null,
+      )
+      atualizarAnimalNaLista(animal.id, {
+        tipo: 'reunido',
+        dataReencontro: res.data_reencontro,
+      })
+      setConfirmandoReunidoGestao(false)
+      setSucessoMensagem('Que notícia maravilhosa! Animal marcado como reunido com a família.')
+      setTimeout(() => setSucessoMensagem(null), 5000)
+    } catch (err) {
+      console.error('Erro ao marcar reunido com gestão:', err)
+      alert('Não foi possível marcar como reunido. Verifique sua conexão e tente novamente.')
+    } finally {
+      setSalvandoReunidoGestao(false)
+    }
+  }
+
+  const handleSalvarContatoGestao = async (novosContatos: {
+    telefone: string
+    whatsapp: string
+    emailAlertas: string
+  }) => {
+    if (!animal || !codigoGestao) return
+    setSalvandoContatoGestao(true)
+    try {
+      const res = await editarContatoComGestao(animal.id, codigoGestao, novosContatos)
+      setAnimal((prev) =>
+        prev
+          ? {
+              ...prev,
+              telefone: res.telefone,
+              whatsapp: res.whatsapp,
+            }
+          : null,
+      )
+      atualizarAnimalNaLista(animal.id, {
+        telefone: res.telefone,
+        whatsapp: res.whatsapp,
+      })
+      setDadosGestao({
+        telefone: res.telefone,
+        whatsapp: res.whatsapp,
+        emailAlertas: res.emailAlertas,
+      })
+      setSucessoMensagem('Dados de contato atualizados com sucesso!')
+      setTimeout(() => setSucessoMensagem(null), 4000)
+    } catch (err) {
+      console.error('Erro ao atualizar contato com gestão:', err)
+      throw new Error('Falha ao atualizar dados de contato. Tente novamente.')
+    } finally {
+      setSalvandoContatoGestao(false)
+    }
+  }
+
   const handleMarcarComoReunido = async () => {
     if (!animal) return
     if (!confirmandoReunido) {
@@ -336,6 +469,99 @@ export default function AnimalDetalhe() {
         <div className="bg-[#e8f5e9] border border-[#28a745]/40 rounded-[14px] p-3.5 flex items-center gap-2.5 text-[#28a745] animate-fade-in shadow-sm">
           <CheckCircle className="w-5 h-5 shrink-0" />
           <span className="text-xs sm:text-sm font-semibold">{sucessoMensagem}</span>
+        </div>
+      )}
+
+      {/* Requisito 2: Se acessado com link de gestão válido (?gestao=<codigo>),
+          mostrar exatamente os dois botões especificados:
+          "Marcar como reunido com a família" e "Editar contato" */}
+      {gestaoValida && (
+        <div className="bg-white border-2 border-[#2d8f6f]/40 rounded-[20px] p-4 sm:p-5 shadow-sm space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e5e0d8]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#2d8f6f] text-white flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-bold text-[#2b2b2b]">Gestão do seu anúncio</h2>
+                  <span className="px-2 py-0.5 rounded-full bg-[#e8f5e9] text-[#2d8f6f] font-bold text-[10px] uppercase">
+                    Acesso verificado
+                  </span>
+                </div>
+                <p className="text-xs text-[#6b6b6b]">
+                  Você está acessando pelo seu link exclusivo de gestão.
+                </p>
+              </div>
+            </div>
+
+            {isReunido && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300">
+                <CheckCircle className="w-3.5 h-3.5 text-amber-800" />
+                <span>Status: Reunido com a família</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            {/* Botão 1: Marcar como reunido com a família */}
+            {!isReunido ? (
+              <>
+                {!confirmandoReunidoGestao ? (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmandoReunidoGestao(true)}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Marcar como reunido com a família</span>
+                  </button>
+                ) : (
+                  <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-300 rounded-[10px] p-1.5 px-3">
+                    <span className="text-xs font-semibold text-amber-950">
+                      Confirmar que o pet foi reunido com a família?
+                    </span>
+                    <button
+                      type="button"
+                      disabled={salvandoReunidoGestao}
+                      onClick={handleMarcarComoReunidoGestao}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-2xs transition-colors disabled:opacity-50"
+                    >
+                      {salvandoReunidoGestao ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <Check className="w-3 h-3" />
+                      )}
+                      <span>Sim</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={salvandoReunidoGestao}
+                      onClick={() => setConfirmandoReunidoGestao(false)}
+                      className="px-2.5 py-1 rounded-md bg-white border border-[#e5e0d8] text-amber-950 font-semibold text-xs hover:bg-[#faf7f2] transition-colors disabled:opacity-50"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <span className="text-xs font-semibold text-[#28a745] inline-flex items-center gap-1.5 bg-[#e8f5e9] px-3 py-1.5 rounded-lg border border-[#28a745]/30">
+                <Check className="w-3.5 h-3.5" />
+                <span>Pet marcado como reunido com a família!</span>
+              </span>
+            )}
+
+            {/* Botão 2: Editar contato */}
+            <button
+              type="button"
+              onClick={() => setModalEditarContatoAberto(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-[#2d8f6f] hover:bg-[#237a5e] text-white font-bold text-xs sm:text-sm shadow-sm transition-all"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Editar contato</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -859,6 +1085,19 @@ export default function AnimalDetalhe() {
           onClose={() => setModalEditarAberto(false)}
           onSalvo={handleAnimalSalvo}
           onSalvarDados={editarAnimal}
+        />
+      )}
+
+      {/* Modal Restrito de Edição de Contato via Código de Gestão */}
+      {gestaoValida && animal && (
+        <AnimalEditarContatoModal
+          isOpen={modalEditarContatoAberto}
+          onClose={() => setModalEditarContatoAberto(false)}
+          telefoneAtual={dadosGestao.telefone || animal.telefone}
+          whatsappAtual={dadosGestao.whatsapp || animal.whatsapp}
+          emailAlertasAtual={dadosGestao.emailAlertas}
+          salvando={salvandoContatoGestao}
+          onSalvar={handleSalvarContatoGestao}
         />
       )}
     </div>

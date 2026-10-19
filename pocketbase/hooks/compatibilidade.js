@@ -13,12 +13,27 @@ onRecordEnrich((e) => {
     const authCollection = e.requestInfo?.auth?.collection?.()?.name
     if (!isSuper && authCollection !== 'admins') {
       e.record.hide('email_alertas')
+      e.record.hide('codigo_secreto')
     }
   } catch (_) {
     try {
       e.record.hide('email_alertas')
+      e.record.hide('codigo_secreto')
     } catch (_) {}
   }
+  e.next()
+}, 'animais')
+
+/**
+ * Hook onRecordCreate: antes de persistir, gera codigo_secreto seguro se não estiver preenchido.
+ */
+onRecordCreate((e) => {
+  try {
+    const codAtual = e.record.getString('codigo_secreto')
+    if (!codAtual || codAtual.trim() === '') {
+      e.record.set('codigo_secreto', $security.randomString(24))
+    }
+  } catch (_) {}
   e.next()
 }, 'animais')
 
@@ -37,6 +52,90 @@ onRecordCreate((e) => {
     const appInstance = e.app
     const animalRecord = e.record
     if (!animalRecord) return
+
+    // Se o cadastro tiver email_alertas, enviar e-mail com o link de gestão exclusivo
+    try {
+      const emailCriador = (animalRecord.getString('email_alertas') || '').trim()
+      const codigoCriador = (animalRecord.getString('codigo_secreto') || '').trim()
+      if (emailCriador && codigoCriador) {
+        const linkGestaoCriador =
+          'https://reencontro-pets.goskip.app/animal/' +
+          animalRecord.id +
+          '?gestao=' +
+          encodeURIComponent(codigoCriador)
+        const petNomeOuEspecie =
+          animalRecord.getString('nome_pet') || animalRecord.getString('especie') || 'seu animal'
+        const tipoCriadorRotulo =
+          animalRecord.getString('tipo') === 'perdido'
+            ? 'perdido'
+            : 'em busca do dono ("Procura-se o dono")'
+
+        const senderAddress =
+          appInstance.settings().meta.senderAddress || 'no-reply@reencontro-pets.goskip.app'
+        const senderName = appInstance.settings().meta.senderName || 'Reencontro Pets'
+
+        const emailSubjectGestao =
+          'Link de gestão do anúncio: ' + petNomeOuEspecie + ' — Reencontro'
+        const htmlBodyGestao =
+          '<!DOCTYPE html>' +
+          '<html lang="pt-BR">' +
+          '<head><meta charset="utf-8"><title>Link de Gestão do seu Anúncio — Reencontro</title></head>' +
+          '<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; background-color: #faf7f2; color: #2b2b2b; margin: 0; padding: 24px;">' +
+          '<table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e5e0d8; overflow: hidden;">' +
+          '<tr><td style="background-color: #2d8f6f; padding: 24px; text-align: center; color: #ffffff;">' +
+          '<h1 style="margin: 0; font-size: 22px; font-weight: bold;">Reencontro — Gestão do Anúncio</h1>' +
+          '<p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">Seu anúncio foi cadastrado com sucesso no mural</p>' +
+          '</td></tr>' +
+          '<tr><td style="padding: 28px 24px;">' +
+          '<p style="font-size: 15px; line-height: 1.5; margin: 0 0 16px 0;">' +
+          'Olá! Seu cadastro de <strong>' +
+          petNomeOuEspecie +
+          '</strong> (' +
+          tipoCriadorRotulo +
+          ') foi publicado com sucesso no Reencontro.' +
+          '</p>' +
+          '<div style="background-color: #f4faf6; border: 1px solid #c7e6d7; border-radius: 12px; padding: 18px; margin-bottom: 24px;">' +
+          '<div style="font-size: 14px; font-weight: bold; color: #2d8f6f; margin-bottom: 8px;">Link de gestão do seu anúncio</div>' +
+          '<p style="font-size: 13px; color: #555555; margin: 0 0 14px 0; line-height: 1.4;">' +
+          '<strong>Guarde este link. Só ele permite alterar seu anúncio.</strong> Com ele você pode editar seus dados de contato ou marcar o pet como reunido com a família quando for encontrado.' +
+          '</p>' +
+          '<div style="text-align: center; margin: 16px 0;">' +
+          '<a href="' +
+          linkGestaoCriador +
+          '" target="_blank" style="background-color: #2d8f6f; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: bold; padding: 12px 24px; border-radius: 10px; display: inline-block;">' +
+          'Acessar gestão do anúncio &rarr;' +
+          '</a>' +
+          '</div>' +
+          '<p style="font-size: 11px; color: #777777; margin: 12px 0 0 0; word-break: break-all;">' +
+          'Link direto: <a href="' +
+          linkGestaoCriador +
+          '" style="color: #2d8f6f;">' +
+          linkGestaoCriador +
+          '</a>' +
+          '</p>' +
+          '</div>' +
+          '</td></tr>' +
+          '<tr><td style="background-color: #faf7f2; padding: 16px 24px; border-top: 1px solid #e5e0d8; font-size: 11px; color: #777777; text-align: center; line-height: 1.4;">' +
+          'Você recebeu este e-mail porque cadastrou um alerta no Reencontro. Guarde este link com segurança.' +
+          '</td></tr>' +
+          '</table></body></html>'
+
+        const mailMsg = new MailerMessage({
+          from: {
+            address: senderAddress,
+            name: senderName,
+          },
+          to: [{ address: emailCriador }],
+          subject: emailSubjectGestao,
+          html: htmlBodyGestao,
+        })
+
+        appInstance.newMailClient().send(mailMsg)
+        console.log('E-mail com link de gestão enviado para ' + emailCriador)
+      }
+    } catch (mailGestaoErr) {
+      console.log('Falha ao enviar e-mail de link de gestão:', mailGestaoErr.message)
+    }
 
     const animalId = animalRecord.id
     const tipoRef = animalRecord.getString('tipo')
@@ -255,6 +354,13 @@ Retorne estritamente um array JSON com id, porcentagem (0-100) e explicacao em p
 
       // 6. Preparação e envio do e-mail com visual limpo e respeitoso em pt-BR
       const linkDetalhes = 'https://reencontro-pets.goskip.app/animal/' + animalId
+      const candCodigo = (candRecord.getString('codigo_secreto') || '').trim()
+      const linkGestaoCand = candCodigo
+        ? 'https://reencontro-pets.goskip.app/animal/' +
+          candRecord.id +
+          '?gestao=' +
+          encodeURIComponent(candCodigo)
+        : ''
       const tipoNovoRotulo =
         tipoRef === 'perdido' ? 'um animal perdido' : 'um animal encontrado ("Procura-se o dono")'
       const emailSubject =
@@ -311,6 +417,16 @@ Retorne estritamente um array JSON com id, porcentagem (0-100) e explicacao em p
         linkDetalhes +
         '</a>' +
         '</p>' +
+        (linkGestaoCand
+          ? '<div style="margin-top: 24px; padding: 14px; background-color: #faf7f2; border: 1px dashed #c7e6d7; border-radius: 10px; font-size: 12px; color: #555555; text-align: left;">' +
+            '<strong>Link de gestão do seu anúncio:</strong> Guarde este link. Só ele permite alterar seu anúncio ou marcá-lo como reunido:<br/>' +
+            '<a href="' +
+            linkGestaoCand +
+            '" style="color: #2d8f6f; word-break: break-all;">' +
+            linkGestaoCand +
+            '</a>' +
+            '</div>'
+          : '') +
         '</td></tr>' +
         '<tr><td style="background-color: #faf7f2; padding: 16px 24px; border-top: 1px solid #e5e0d8; font-size: 11px; color: #777777; text-align: center; line-height: 1.4;">' +
         'Você recebeu esta mensagem porque cadastrou seu e-mail para receber alertas no Reencontro. Seu e-mail não aparece no site nem é divulgado publicamente.' +
@@ -634,5 +750,147 @@ Retorne estritamente um array JSON com id, porcentagem (0-100) e explicacao em p
     return e.json(500, {
       error: 'Erro interno ao processar análise de compatibilidade',
     })
+  }
+})
+
+/**
+ * Endpoint POST /backend/v1/validar-codigo
+ * Valida se um determinado codigo_secreto pertence ao animalId informado.
+ * Nunca expõe o código nem dados sigilosos.
+ * Retorna { valido: boolean, emailAlertas?: string, telefone?: string, whatsapp?: string } se válido
+ */
+routerAdd('POST', '/backend/v1/validar-codigo', (e) => {
+  try {
+    const body = e.requestInfo().body || {}
+    const animalId = (body.animalId || '').trim()
+    const codigo = (body.codigo || '').trim()
+
+    if (!animalId || !codigo) {
+      return e.json(200, { valido: false })
+    }
+
+    let animal = null
+    try {
+      animal = $app.findRecordById('animais', animalId)
+    } catch (_) {
+      return e.json(200, { valido: false })
+    }
+
+    const codGravado = (animal.getString('codigo_secreto') || '').trim()
+    if (!codGravado || codGravado !== codigo) {
+      return e.json(200, { valido: false })
+    }
+
+    return e.json(200, {
+      valido: true,
+      telefone: animal.getString('telefone') || '',
+      whatsapp: animal.getString('whatsapp') || '',
+      emailAlertas: animal.getString('email_alertas') || '',
+      tipo: animal.getString('tipo') || '',
+      dataReencontro: animal.getString('data_reencontro') || '',
+    })
+  } catch (err) {
+    console.log('Erro ao validar código secreto:', err.message)
+    return e.json(500, { error: 'Erro ao validar código' })
+  }
+})
+
+/**
+ * Endpoint POST /backend/v1/gestao/marcar-reunido
+ * Permite a quem cadastrou marcar o animal como reunido com a família
+ * Exige animalId e codigo válidos.
+ * Grava tipo = 'reunido' e data_reencontro = data atual (YYYY-MM-DD ou ISO).
+ */
+routerAdd('POST', '/backend/v1/gestao/marcar-reunido', (e) => {
+  try {
+    const body = e.requestInfo().body || {}
+    const animalId = (body.animalId || '').trim()
+    const codigo = (body.codigo || '').trim()
+
+    if (!animalId || !codigo) {
+      return e.badRequestError('Animal ID e código secreto são obrigatórios.')
+    }
+
+    let animal = null
+    try {
+      animal = $app.findRecordById('animais', animalId)
+    } catch (_) {
+      return e.notFoundError('Animal não encontrado.')
+    }
+
+    const codGravado = (animal.getString('codigo_secreto') || '').trim()
+    if (!codGravado || codGravado !== codigo) {
+      return e.forbiddenError('Código de gestão inválido.')
+    }
+
+    // Grava tipo = 'reunido' e data_reencontro = data de hoje
+    const hojeIso = new Date().toISOString()
+    animal.set('tipo', 'reunido')
+    animal.set('data_reencontro', hojeIso)
+    $app.save(animal)
+
+    return e.json(200, {
+      sucesso: true,
+      id: animal.id,
+      tipo: 'reunido',
+      data_reencontro: hojeIso,
+    })
+  } catch (err) {
+    console.log('Erro ao marcar reunido via código de gestão:', err.message)
+    return e.json(500, { error: 'Erro ao atualizar status do animal' })
+  }
+})
+
+/**
+ * Endpoint POST /backend/v1/gestao/editar-contato
+ * Permite a quem cadastrou editar telefone, whatsapp e email_alertas
+ * Exige animalId e codigo válidos.
+ */
+routerAdd('POST', '/backend/v1/gestao/editar-contato', (e) => {
+  try {
+    const body = e.requestInfo().body || {}
+    const animalId = (body.animalId || '').trim()
+    const codigo = (body.codigo || '').trim()
+
+    if (!animalId || !codigo) {
+      return e.badRequestError('Animal ID e código secreto são obrigatórios.')
+    }
+
+    let animal = null
+    try {
+      animal = $app.findRecordById('animais', animalId)
+    } catch (_) {
+      return e.notFoundError('Animal não encontrado.')
+    }
+
+    const codGravado = (animal.getString('codigo_secreto') || '').trim()
+    if (!codGravado || codGravado !== codigo) {
+      return e.forbiddenError('Código de gestão inválido.')
+    }
+
+    if (body.telefone !== undefined) {
+      animal.set('telefone', (body.telefone || '').trim())
+    }
+    if (body.whatsapp !== undefined) {
+      animal.set('whatsapp', (body.whatsapp || '').trim())
+    }
+    if (body.emailAlertas !== undefined || body.email_alertas !== undefined) {
+      const emailNovo =
+        (body.emailAlertas !== undefined ? body.emailAlertas : body.email_alertas) || ''
+      animal.set('email_alertas', emailNovo.trim())
+    }
+
+    $app.save(animal)
+
+    return e.json(200, {
+      sucesso: true,
+      id: animal.id,
+      telefone: animal.getString('telefone') || '',
+      whatsapp: animal.getString('whatsapp') || '',
+      emailAlertas: animal.getString('email_alertas') || '',
+    })
+  } catch (err) {
+    console.log('Erro ao editar contato via código de gestão:', err.message)
+    return e.json(500, { error: 'Erro ao atualizar contato' })
   }
 })

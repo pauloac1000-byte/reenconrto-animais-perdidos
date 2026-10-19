@@ -20,6 +20,7 @@ interface PetContextType {
   removerAnimal: (id: string) => Promise<void>
   recarregarAnimais: () => Promise<void>
   marcarReunido: (id: string) => Promise<AnimalCadastro>
+  atualizarAnimalNaLista: (id: string, parciais: Partial<AnimalCadastro>) => void
   cadastroEmAndamento: AnimalCadastro | null
   setCadastroEmAndamento: (animal: AnimalCadastro | null) => void
 }
@@ -79,6 +80,10 @@ export const PetProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAnimais((prev) => prev.filter((a) => a.id !== id))
   }
 
+  const atualizarAnimalNaLista = (id: string, parciais: Partial<AnimalCadastro>) => {
+    setAnimais((prev) => prev.map((a) => (a.id === id ? { ...a, ...parciais } : a)))
+  }
+
   return (
     <PetContext.Provider
       value={{
@@ -90,6 +95,7 @@ export const PetProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removerAnimal,
         recarregarAnimais,
         marcarReunido,
+        atualizarAnimalNaLista,
         cadastroEmAndamento,
         setCadastroEmAndamento,
       }}

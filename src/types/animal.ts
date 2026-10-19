@@ -25,7 +25,18 @@ export interface AnimalCadastro {
   nomePessoa?: string
   nomePet?: string
   emailAlertas?: string
+  codigoSecreto?: string
+  dataReencontro?: string
   createdAt?: string
+}
+
+export interface ValidacaoCodigoGestao {
+  valido: boolean
+  telefone?: string
+  whatsapp?: string
+  emailAlertas?: string
+  tipo?: TipoAnimal
+  dataReencontro?: string
 }
 
 export interface AnimalCompativelItem {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   MapPin,
@@ -131,11 +131,34 @@ export default function AnimalDetalhe() {
     }
   }, [id, animais])
 
-  // Validação do código de gestão via ?gestao=<codigo>
+  const [searchParams] = useSearchParams()
+
+  // Validação do código de gestão via ?gestao=<codigo> (com persistência em sessionStorage)
   useEffect(() => {
     let ativo = true
-    const searchParams = new URLSearchParams(window.location.search)
-    const cod = (searchParams.get('gestao') || '').trim()
+
+    // 1. Tenta obter o parâmetro da URL atual
+    let cod = (searchParams.get('gestao') || '').trim()
+
+    // 2. Fallback: window.location.search (se useSearchParams não tiver capturado de imediato)
+    if (!cod && typeof window !== 'undefined') {
+      try {
+        const rawParams = new URLSearchParams(window.location.search)
+        cod = (rawParams.get('gestao') || '').trim()
+      } catch {
+        /* intentionally ignored */
+      }
+    }
+
+    // 3. Fallback: sessionStorage específico deste animal
+    const storageKey = id ? `gestao_cod_${id}` : null
+    if (!cod && storageKey && typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        cod = (sessionStorage.getItem(storageKey) || '').trim()
+      } catch {
+        /* intentionally ignored */
+      }
+    }
 
     if (!cod || !id) {
       setGestaoValida(false)
@@ -156,8 +179,23 @@ export default function AnimalDetalhe() {
             whatsapp: res.whatsapp,
             emailAlertas: res.emailAlertas,
           })
+          // Salva no sessionStorage para manter o acesso durante navegação interna
+          if (storageKey && typeof window !== 'undefined' && window.sessionStorage) {
+            try {
+              sessionStorage.setItem(storageKey, cod)
+            } catch {
+              /* intentionally ignored */
+            }
+          }
         } else {
           setGestaoValida(false)
+          if (storageKey && typeof window !== 'undefined' && window.sessionStorage) {
+            try {
+              sessionStorage.removeItem(storageKey)
+            } catch {
+              /* intentionally ignored */
+            }
+          }
         }
       } catch (e) {
         console.error('Erro na validação do link de gestão:', e)
@@ -170,7 +208,7 @@ export default function AnimalDetalhe() {
     return () => {
       ativo = false
     }
-  }, [id])
+  }, [id, searchParams])
 
   // Busca compatibilidade de forma transparente e não-bloqueante
   useEffect(() => {

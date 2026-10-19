@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom'
 import { HeartCrack, HeartHandshake, ArrowRight, Sparkles, PawPrint, Loader2 } from 'lucide-react'
 import { usePets } from '@/context/PetContext'
 import { AnimalCard } from '@/components/AnimalCard'
+import fotoPapagaio from '@/assets/papagaio-verde-com-desvanecimento-transparente-0bc3b.png'
+import fotoGato from '@/assets/bob-o-gato-rajado-com-recorte-suave-069b8.png'
+import fotoCao from '@/assets/cachorro-caramelo-com-desvanecimento-transparente-7add9.png'
 
 export default function Index() {
   const { animais, isLoading } = usePets()
@@ -17,15 +20,69 @@ export default function Index() {
         <div className="absolute -top-12 -left-12 w-48 h-48 bg-[#2d8f6f]/5 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-[#f49b4f]/10 rounded-full blur-2xl pointer-events-none" />
 
+        {/* ======================================================== */}
+        {/* ANIMAIS DECORATIVOS NO FRAME HERO (Papagaio, Gato e Cão) */}
+        {/* Camada z-0, pointer-events-none, sem sobrepor textos/cards */}
+        {/* ======================================================== */}
+
+        {/* 1. Papagaio verde: canto superior esquerdo do hero */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-4 -left-4 sm:top-2 sm:left-2 md:top-4 md:left-5 z-0 select-none animate-pet-intro-1"
+        >
+          <div className="animate-pet-float-1">
+            <img
+              src={fotoPapagaio}
+              alt=""
+              loading="eager"
+              className="w-28 sm:w-36 md:w-48 lg:w-56 h-auto max-h-[190px] sm:max-h-[220px] md:max-h-[280px] object-contain opacity-40 sm:opacity-50 md:opacity-55 transition-opacity duration-500 [filter:drop-shadow(0_8px_20px_rgba(45,143,111,0.28))_drop-shadow(0_2px_8px_rgba(45,143,111,0.18))]"
+            />
+          </div>
+        </div>
+
+        {/* 2. Gato rajado: canto superior direito do hero */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-4 -right-4 sm:top-2 sm:right-2 md:top-4 md:right-5 z-0 select-none animate-pet-intro-2"
+        >
+          <div className="animate-pet-float-2">
+            <img
+              src={fotoGato}
+              alt=""
+              loading="eager"
+              className="w-28 sm:w-36 md:w-48 lg:w-56 h-auto max-h-[190px] sm:max-h-[220px] md:max-h-[280px] object-contain opacity-40 sm:opacity-50 md:opacity-55 transition-opacity duration-500 [filter:drop-shadow(0_8px_22px_rgba(244,155,79,0.28))_drop-shadow(0_2px_8px_rgba(244,155,79,0.18))]"
+            />
+          </div>
+        </div>
+
+        {/* Bloco central do Hero (badge, título e descrição) */}
         <div className="max-w-2xl mx-auto space-y-4 relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-[#e5e0d8] text-xs font-semibold text-[#2d8f6f] shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-[#f49b4f]" />
             <span>Unindo lares e corações em todo o Brasil</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#2b2b2b] leading-[1.15]">
-            Perdeu ou encontrou um animal?
-          </h1>
+          {/* Wrapper relativo para acomodar o cão caramelo ao lado esquerdo do título central */}
+          <div className="relative">
+            {/* 3. Cão caramelo: ao lado do título central, à esquerda */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -left-8 sm:-left-16 md:-left-24 lg:-left-32 top-1/2 -translate-y-1/2 -z-10 select-none animate-pet-intro-3"
+            >
+              <div className="animate-pet-float-3">
+                <img
+                  src={fotoCao}
+                  alt=""
+                  loading="eager"
+                  className="w-24 sm:w-32 md:w-44 lg:w-52 h-auto max-h-[180px] sm:max-h-[210px] md:max-h-[260px] object-contain opacity-35 sm:opacity-45 md:opacity-50 transition-opacity duration-500 [filter:drop-shadow(0_8px_22px_rgba(244,155,79,0.25))_drop-shadow(0_2px_8px_rgba(45,143,111,0.16))]"
+                />
+              </div>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-[#2b2b2b] leading-[1.15] relative">
+              Perdeu ou encontrou um animal?
+            </h1>
+          </div>
 
           <p className="text-base sm:text-lg text-[#6b6b6b] leading-relaxed max-w-xl mx-auto">
             Cadastre aqui e ajude a reunir um pet à sua família. Cada detalhe faz a diferença para

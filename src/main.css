@@ -240,6 +240,85 @@
     }
   }
 
+  /* Animações decorativas para as fotos de animais no Hero */
+  @keyframes pet-float-slow-1 {
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-8px) rotate(1.2deg);
+    }
+  }
+
+  @keyframes pet-float-slow-2 {
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-10px) rotate(-1.5deg);
+    }
+  }
+
+  @keyframes pet-float-slow-3 {
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-7px) rotate(1deg);
+    }
+  }
+
+  @keyframes pet-fade-intro {
+    0% {
+      opacity: 0;
+      transform: translateY(14px) scale(0.96);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .animate-pet-float-1 {
+    animation: pet-float-slow-1 6.5s ease-in-out infinite;
+  }
+
+  .animate-pet-float-2 {
+    animation: pet-float-slow-2 8s ease-in-out infinite;
+  }
+
+  .animate-pet-float-3 {
+    animation: pet-float-slow-3 7.2s ease-in-out infinite;
+  }
+
+  .animate-pet-intro-1 {
+    animation: pet-fade-intro 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards;
+  }
+
+  .animate-pet-intro-2 {
+    animation: pet-fade-intro 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.35s backwards;
+  }
+
+  .animate-pet-intro-3 {
+    animation: pet-fade-intro 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.55s backwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-pet-float-1,
+    .animate-pet-float-2,
+    .animate-pet-float-3 {
+      animation: none !important;
+    }
+    .animate-pet-intro-1,
+    .animate-pet-intro-2,
+    .animate-pet-intro-3 {
+      animation: fade-in 0.3s ease-out backwards !important;
+    }
+  }
+
   .animate-accordion-down {
     animation: accordion-down 0.2s ease-out;
   }

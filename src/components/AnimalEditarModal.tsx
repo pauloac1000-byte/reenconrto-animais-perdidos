@@ -91,6 +91,9 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
   const [data, setData] = useState<string>(animal.data)
   const [nomePessoa, setNomePessoa] = useState<string>(animal.nomePessoa || '')
   const [nomePet, setNomePet] = useState<string>(animal.nomePet || '')
+  const [detalheConfirmacao, setDetalheConfirmacao] = useState<string>(
+    animal.detalheConfirmacao || '',
+  )
   const [caracteristicas, setCaracteristicas] = useState<string>(animal.caracteristicas || '')
   const [descricao, setDescricao] = useState<string>(animal.descricao || '')
   const [telefone, setTelefone] = useState<string>(
@@ -120,6 +123,7 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
       setData(animal.data)
       setNomePessoa(animal.nomePessoa || '')
       setNomePet(animal.nomePet || '')
+      setDetalheConfirmacao(animal.detalheConfirmacao || '')
       setCaracteristicas(animal.caracteristicas || '')
       setDescricao(animal.descricao || '')
       setTelefone(animal.telefone ? aplicarMascaraTelefone(animal.telefone) : '')
@@ -250,6 +254,7 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
         data,
         nomePessoa: nomePessoa.trim() || undefined,
         nomePet: nomePet.trim() || undefined,
+        detalheConfirmacao: tipo === 'perdido' ? detalheConfirmacao.trim() || undefined : undefined,
         caracteristicas: caracteristicas.trim() || undefined,
         descricao: descricao.trim() || undefined,
         telefone: telefone.trim() || undefined,
@@ -738,6 +743,32 @@ export const AnimalEditarModal: React.FC<AnimalEditarModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* 6.1 Detalhe de confirmação (visível ao admin quando for animal perdido) */}
+          {tipo === 'perdido' && (
+            <div className="space-y-1.5 pt-2 border-t border-[#e5e0d8]">
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="edit-detalhe-confirmacao"
+                  className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+                >
+                  Detalhe de confirmação (Privado / Anti-golpe)
+                </label>
+                <span className="text-[11px] text-[#6b6b6b]">Opcional • Oculto ao público</span>
+              </div>
+              <input
+                id="edit-detalhe-confirmacao"
+                type="text"
+                placeholder="Ex.: uma mancha escondida que só o tutor conhece"
+                value={detalheConfirmacao}
+                onChange={(e) => setDetalheConfirmacao(e.target.value)}
+                className="w-full h-10 px-3.5 bg-white rounded-xl border border-[#e5e0d8] text-sm text-[#2b2b2b] focus:outline-none focus:border-[#2d8f6f] transition-all"
+              />
+              <p className="text-[11px] text-[#6b6b6b]">
+                Dado sigiloso visível apenas no link de gestão e no painel do administrador.
+              </p>
+            </div>
+          )}
 
           {/* 7. Características marcantes */}
           <div className="space-y-1.5">

@@ -109,6 +109,7 @@ export default function Resumo() {
         nomePessoa: animal.nomePessoa,
         nomePet: animal.nomePet,
         emailAlertas: animal.emailAlertas,
+        detalheConfirmacao: animal.detalheConfirmacao,
       })
 
       setAnimalPublicado(animalCriado)

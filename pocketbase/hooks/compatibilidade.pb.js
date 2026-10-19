@@ -14,11 +14,13 @@ onRecordEnrich((e) => {
     if (!isSuper && authCollection !== 'admins') {
       e.record.hide('email_alertas')
       e.record.hide('codigo_secreto')
+      e.record.hide('detalhe_confirmacao')
     }
   } catch (_) {
     try {
       e.record.hide('email_alertas')
       e.record.hide('codigo_secreto')
+      e.record.hide('detalhe_confirmacao')
     } catch (_) {}
   }
   e.next()
@@ -788,6 +790,7 @@ routerAdd('POST', '/backend/v1/validar-codigo', (e) => {
       emailAlertas: animal.getString('email_alertas') || '',
       tipo: animal.getString('tipo') || '',
       dataReencontro: animal.getString('data_reencontro') || '',
+      detalheConfirmacao: animal.getString('detalhe_confirmacao') || '',
     })
   } catch (err) {
     console.log('Erro ao validar código secreto:', err.message)
@@ -892,5 +895,49 @@ routerAdd('POST', '/backend/v1/gestao/editar-contato', (e) => {
   } catch (err) {
     console.log('Erro ao editar contato via código de gestão:', err.message)
     return e.json(500, { error: 'Erro ao atualizar contato' })
+  }
+})
+
+/**
+ * Endpoint POST /backend/v1/denunciar
+ * Permite a qualquer visitante registrar uma denúncia discreta sobre um anúncio de animal.
+ * A coleção 'denuncias' possui regras travadas (null), portanto a gravação é feita
+ * exclusivamente pelo backend com verificação do animal existente.
+ * Body: { animalId: string, motivo?: string }
+ */
+routerAdd('POST', '/backend/v1/denunciar', (e) => {
+  try {
+    const body = e.requestInfo().body || {}
+    const animalId = (body.animalId || '').trim()
+    const motivo = (body.motivo || '').trim()
+
+    if (!animalId) {
+      return e.badRequestError('O identificador do anúncio é obrigatório.')
+    }
+
+    // Valida se o animal existe no banco
+    try {
+      $app.findRecordById('animais', animalId)
+    } catch (_) {
+      return e.notFoundError('Anúncio não encontrado.')
+    }
+
+    const colDenuncias = $app.findCollectionByNameOrId('denuncias')
+    const recDenuncia = new Record(colDenuncias)
+    recDenuncia.set('animal_id', animalId)
+    if (motivo) {
+      recDenuncia.set('motivo', motivo)
+    }
+    recDenuncia.set('status', 'nova')
+
+    $app.save(recDenuncia)
+
+    return e.json(200, {
+      sucesso: true,
+      mensagem: 'Denúncia registrada. Obrigado por ajudar a proteger a comunidade.',
+    })
+  } catch (err) {
+    console.log('Erro ao registrar denúncia:', err.message)
+    return e.json(500, { error: 'Erro ao registrar denúncia' })
   }
 })

@@ -19,6 +19,7 @@ import {
   User,
   Heart,
   Mail,
+  ShieldAlert,
 } from 'lucide-react'
 import type {
   AnimalCadastro,
@@ -100,6 +101,9 @@ export default function Cadastro() {
   const [nomePessoa, setNomePessoa] = useState<string>(dadosIniciaisState?.nomePessoa || '')
   const [nomePet, setNomePet] = useState<string>(dadosIniciaisState?.nomePet || '')
   const [emailAlertas, setEmailAlertas] = useState<string>(dadosIniciaisState?.emailAlertas || '')
+  const [detalheConfirmacao, setDetalheConfirmacao] = useState<string>(
+    dadosIniciaisState?.detalheConfirmacao || '',
+  )
   const [caracteristicas, setCaracteristicas] = useState<string>(
     dadosIniciaisState?.caracteristicas || '',
   )
@@ -266,6 +270,7 @@ export default function Cadastro() {
       nomePessoa: nomePessoa.trim() || undefined,
       nomePet: nomePet.trim() || undefined,
       emailAlertas: emailAlertas.trim() || undefined,
+      detalheConfirmacao: isPerdido ? detalheConfirmacao.trim() || undefined : undefined,
       caracteristicas: caracteristicas.trim() || undefined,
       descricao: descricao.trim() || undefined,
       telefone: telefone.trim() || undefined,
@@ -890,6 +895,37 @@ export default function Cadastro() {
             </div>
           )}
         </div>
+
+        {/* 11. Detalhe de confirmação (Anti-golpe: APENAS no caminho de animal perdido) */}
+        {tipo === 'perdido' && (
+          <div className="space-y-1.5 pt-2 border-t border-[#e5e0d8]">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="detalhe-confirmacao-input"
+                className="block text-xs font-bold uppercase tracking-[0.05em] text-[#2b2b2b]"
+              >
+                Detalhe de confirmação
+              </label>
+              <span className="text-xs text-[#6b6b6b]">Opcional • Privado</span>
+            </div>
+            <div className="relative">
+              <ShieldAlert className="w-4 h-4 text-[#f49b4f] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="detalhe-confirmacao-input"
+                type="text"
+                placeholder="Ex.: uma mancha escondida que só o tutor conhece"
+                value={detalheConfirmacao}
+                onChange={(e) => setDetalheConfirmacao(e.target.value)}
+                className="w-full h-11 pl-10 pr-3.5 bg-white rounded-xl border border-[#e5e0d8] text-sm text-[#2b2b2b] placeholder:text-[#6b6b6b]/60 focus:outline-none focus:border-[#2d8f6f] focus:ring-4 focus:ring-[#2d8f6f]/15 transition-all"
+              />
+            </div>
+            <p className="text-xs text-[#6b6b6b]">
+              Ex.: uma mancha escondida que só o tutor conhece. Este detalhe é privado, nunca
+              aparece no site e serve para você confirmar a posse quando alguém disser que encontrou
+              o pet.
+            </p>
+          </div>
+        )}
 
         {/* Botão de envio */}
         <div className="pt-4 border-t border-[#e5e0d8] flex flex-col sm:flex-row items-center justify-between gap-4">

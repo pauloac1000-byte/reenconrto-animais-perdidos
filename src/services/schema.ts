@@ -42,6 +42,7 @@ export interface AnimalRecord {
   email_alertas?: string
   codigo_secreto?: string
   data_reencontro?: string
+  detalhe_confirmacao?: string
   created: string
   updated: string
   collectionId: string
@@ -74,6 +75,8 @@ export function recordToAnimal(record: AnimalRecord): AnimalCadastro {
     // codigo_secreto só estará presente imediatamente na criação do registro quando retornado
     codigoSecreto: record.codigo_secreto || undefined,
     dataReencontro: record.data_reencontro || undefined,
+    // detalheConfirmacao é ocultado por padrão no enrich para público; quando presente (admin) mapeia
+    detalheConfirmacao: record.detalhe_confirmacao || undefined,
     // email_alertas é deliberadamente NÃO exposto em AnimalCadastro para clientes públicos
     createdAt: record.created,
   }

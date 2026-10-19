@@ -27,6 +27,7 @@ export interface AnimalCadastro {
   emailAlertas?: string
   codigoSecreto?: string
   dataReencontro?: string
+  detalheConfirmacao?: string
   createdAt?: string
 }
 
@@ -37,6 +38,7 @@ export interface ValidacaoCodigoGestao {
   emailAlertas?: string
   tipo?: TipoAnimal
   dataReencontro?: string
+  detalheConfirmacao?: string
 }
 
 export interface AnimalCompativelItem {

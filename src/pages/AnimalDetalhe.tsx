@@ -20,6 +20,10 @@ import {
   Edit3,
   Trash2,
   AlertTriangle,
+  Flag,
+  KeyRound,
+  ShieldAlert,
+  X,
 } from 'lucide-react'
 import type { AnimalCadastro, AnimalCompativelItem } from '@/types/animal'
 import {
@@ -36,6 +40,7 @@ import {
   validarCodigoGestao,
   marcarReunidoComGestao,
   editarContatoComGestao,
+  denunciarAnuncio,
 } from '@/services/animalService'
 import { AnimalCompativelCard } from '@/components/AnimalCompativelCard'
 import { AnimalEditarModal } from '@/components/AnimalEditarModal'
@@ -62,11 +67,18 @@ export default function AnimalDetalhe() {
     telefone?: string
     whatsapp?: string
     emailAlertas?: string
+    detalheConfirmacao?: string
   }>({})
   const [modalEditarContatoAberto, setModalEditarContatoAberto] = useState<boolean>(false)
   const [salvandoContatoGestao, setSalvandoContatoGestao] = useState<boolean>(false)
   const [confirmandoReunidoGestao, setConfirmandoReunidoGestao] = useState<boolean>(false)
   const [salvandoReunidoGestao, setSalvandoReunidoGestao] = useState<boolean>(false)
+
+  // Denúncia discreta de anúncio
+  const [modalDenunciaAberto, setModalDenunciaAberto] = useState<boolean>(false)
+  const [motivoDenuncia, setMotivoDenuncia] = useState<string>('')
+  const [enviandoDenuncia, setEnviandoDenuncia] = useState<boolean>(false)
+  const [denunciaConcluida, setDenunciaConcluida] = useState<boolean>(false)
 
   // Funções administrativas: Edição e Exclusão
   const [modalEditarAberto, setModalEditarAberto] = useState<boolean>(false)
@@ -178,6 +190,7 @@ export default function AnimalDetalhe() {
             telefone: res.telefone,
             whatsapp: res.whatsapp,
             emailAlertas: res.emailAlertas,
+            detalheConfirmacao: res.detalheConfirmacao,
           })
           // Salva no sessionStorage para manter o acesso durante navegação interna
           if (storageKey && typeof window !== 'undefined' && window.sessionStorage) {
@@ -455,8 +468,35 @@ export default function AnimalDetalhe() {
   const handleAnimalSalvo = (animalAtualizado: AnimalCadastro) => {
     setAnimal(animalAtualizado)
     setImgError(false)
+    if (animalAtualizado.detalheConfirmacao !== undefined) {
+      setDadosGestao((prev) => ({
+        ...prev,
+        detalheConfirmacao: animalAtualizado.detalheConfirmacao,
+      }))
+    }
     setSucessoMensagem('Cadastro atualizado com sucesso no banco!')
     setTimeout(() => setSucessoMensagem(null), 4000)
+  }
+
+  const handleEnviarDenuncia = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!animal?.id || enviandoDenuncia) return
+
+    setEnviandoDenuncia(true)
+    try {
+      await denunciarAnuncio(animal.id, motivoDenuncia)
+      setDenunciaConcluida(true)
+      setTimeout(() => {
+        setModalDenunciaAberto(false)
+        setDenunciaConcluida(false)
+        setMotivoDenuncia('')
+      }, 3500)
+    } catch (err) {
+      console.error('Falha ao registrar denúncia:', err)
+      alert('Não foi possível enviar a denúncia no momento. Tente novamente mais tarde.')
+    } finally {
+      setEnviandoDenuncia(false)
+    }
   }
 
   const localFormatado = animal.uf ? `${animal.cidade}, ${animal.uf}` : animal.cidade
@@ -970,6 +1010,17 @@ export default function AnimalDetalhe() {
               </h3>
             </div>
 
+            {/* Aviso informativo anti-golpe conforme exigido verbatim */}
+            <div className="p-3.5 rounded-xl bg-[#fff8e6] border border-[#f49b4f]/35 flex items-start gap-2.5 text-xs text-[#7c4a03] leading-relaxed">
+              <ShieldAlert className="w-4 h-4 text-[#f49b4f] shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold">
+                  Nunca pague antes de ver o animal. Peça uma foto atual com um detalhe que só o
+                  tutor conhece.
+                </span>
+              </div>
+            </div>
+
             {temContatos ? (
               <div className="flex flex-wrap items-center gap-3 pt-1">
                 {animal.whatsapp &&
@@ -1051,6 +1102,35 @@ export default function AnimalDetalhe() {
             )}
           </div>
         </div>
+
+        {/* Bloco dedicado do Detalhe de Confirmação: exibido APENAS para quem acessou via gestão válida ou como admin logado */}
+        {(gestaoValida || isAdmin) &&
+          isPerdido &&
+          (dadosGestao.detalheConfirmacao || animal.detalheConfirmacao) && (
+            <div className="mx-6 sm:mx-8 mb-6 p-4 rounded-xl bg-[#f0f9f5] border border-[#2d8f6f]/30 flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#2d8f6f]/15 text-[#2d8f6f] flex items-center justify-center shrink-0 mt-0.5">
+                <KeyRound className="w-4 h-4" />
+              </div>
+              <div className="space-y-1 text-xs text-[#2b2b2b]">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold uppercase tracking-wider text-[#2d8f6f] text-[10px]">
+                    Detalhe de confirmação (Privado)
+                  </span>
+                  <span className="text-[10px] text-[#6b6b6b] bg-white px-2 py-0.5 rounded border border-[#e5e0d8]">
+                    {gestaoValida ? 'Visível apenas no seu link de gestão' : 'Visível para admin'}
+                  </span>
+                </div>
+                <p className="font-semibold text-sm text-[#1e5845]">
+                  &ldquo;{dadosGestao.detalheConfirmacao || animal.detalheConfirmacao}&rdquo;
+                </p>
+                <p className="text-[11px] text-[#555555]">
+                  Dica de segurança: quando alguém entrar em contato dizendo que encontrou seu
+                  animal, peça para essa pessoa confirmar este detalhe ou enviar uma foto
+                  mostrando-o antes de qualquer encontro ou pagamento.
+                </p>
+              </div>
+            </div>
+          )}
       </article>
 
       {/* Grau de Compatibilidade quando houver (omitido se não houver candidatos) */}
@@ -1114,6 +1194,119 @@ export default function AnimalDetalhe() {
           <span>Cadastrar outro animal</span>
         </Link>
       </div>
+
+      {/* Botão discreto de Denunciar Anúncio (público, rodapé da página) */}
+      <div className="pt-2 flex justify-center text-center">
+        <button
+          type="button"
+          onClick={() => {
+            setDenunciaConcluida(false)
+            setMotivoDenuncia('')
+            setModalDenunciaAberto(true)
+          }}
+          className="inline-flex items-center gap-1.5 text-xs text-[#8c827a] hover:text-[#d9534f] transition-colors py-1 px-2.5 rounded-md hover:bg-black/5"
+          title="Denunciar este anúncio por suspeita de fraude, conteúdo impróprio ou golpe"
+        >
+          <Flag className="w-3.5 h-3.5 opacity-80" />
+          <span>Denunciar anúncio</span>
+        </button>
+      </div>
+
+      {/* Modal discreto de Denúncia */}
+      {modalDenunciaAberto && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-denuncia-titulo"
+        >
+          <div className="relative w-full max-w-md bg-white rounded-[20px] border border-[#e5e0d8] shadow-xl overflow-hidden p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#e5e0d8]">
+              <div className="flex items-center gap-2 text-[#2b2b2b]">
+                <div className="w-8 h-8 rounded-lg bg-red-50 text-[#d9534f] flex items-center justify-center shrink-0">
+                  <Flag className="w-4 h-4" />
+                </div>
+                <h3 id="modal-denuncia-titulo" className="text-base font-bold">
+                  Denunciar anúncio
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalDenunciaAberto(false)}
+                disabled={enviandoDenuncia}
+                className="p-1.5 rounded-lg text-[#6b6b6b] hover:text-[#2b2b2b] hover:bg-[#faf7f2] transition-colors disabled:opacity-50"
+                aria-label="Fechar"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {denunciaConcluida ? (
+              <div className="py-6 text-center space-y-2 animate-fade-in">
+                <div className="w-12 h-12 mx-auto rounded-full bg-[#e8f5e9] text-[#28a745] flex items-center justify-center">
+                  <Check className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-[#2b2b2b]">Denúncia registrada</h4>
+                <p className="text-xs text-[#6b6b6b] max-w-xs mx-auto">
+                  Obrigado por ajudar a proteger a comunidade.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleEnviarDenuncia} className="space-y-4">
+                <p className="text-xs text-[#6b6b6b] leading-relaxed">
+                  Você suspeita de tentativa de golpe, informações falsas ou anúncio indevido?
+                  Registre uma denúncia para análise da equipe.
+                </p>
+
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor="motivo-denuncia-input"
+                    className="block text-xs font-bold uppercase tracking-wider text-[#6b6b6b]"
+                  >
+                    Motivo da denúncia (opcional)
+                  </label>
+                  <textarea
+                    id="motivo-denuncia-input"
+                    rows={3}
+                    placeholder="Ex.: pediram dinheiro adiantado, foto retirada da internet, cobrança de taxa indevida…"
+                    value={motivoDenuncia}
+                    onChange={(e) => setMotivoDenuncia(e.target.value)}
+                    className="w-full p-3 bg-white rounded-xl border border-[#e5e0d8] text-xs text-[#2b2b2b] placeholder:text-[#6b6b6b]/60 focus:outline-none focus:border-[#2d8f6f] focus:ring-2 focus:ring-[#2d8f6f]/15 transition-all resize-none"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setModalDenunciaAberto(false)}
+                    disabled={enviandoDenuncia}
+                    className="px-4 py-2 rounded-[10px] border border-[#e5e0d8] text-xs font-semibold text-[#6b6b6b] hover:bg-[#faf7f2] transition-colors disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={enviandoDenuncia}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[10px] bg-[#d9534f] hover:bg-red-700 text-white text-xs font-bold shadow-2xs transition-all disabled:opacity-50"
+                  >
+                    {enviandoDenuncia ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Enviando…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Flag className="w-3.5 h-3.5" />
+                        <span>Enviar denúncia</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Modal de Edição Completa para Administrador */}
       {isAdmin && animal && (

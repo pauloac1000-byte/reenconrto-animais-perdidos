@@ -126,6 +126,12 @@ export async function atualizarAnimal(
     if (dados.emailAlertas !== undefined) {
       formData.append('email_alertas', dados.emailAlertas ? dados.emailAlertas.trim() : '')
     }
+    if (dados.detalheConfirmacao !== undefined) {
+      formData.append(
+        'detalhe_confirmacao',
+        dados.detalheConfirmacao ? dados.detalheConfirmacao.trim() : '',
+      )
+    }
 
     // Processamento de nova foto (se o usuário escolheu um novo arquivo)
     if (dados.fotoArquivo instanceof File) {
@@ -199,6 +205,9 @@ export async function criarAnimal(
     }
     if (dados.emailAlertas) {
       formData.append('email_alertas', dados.emailAlertas.trim())
+    }
+    if (dados.detalheConfirmacao) {
+      formData.append('detalhe_confirmacao', dados.detalheConfirmacao.trim())
     }
 
     // Processamento da foto: se tiver File anexado, usa diretamente;
@@ -328,12 +337,35 @@ export async function analisarCompatibilidadeAnimal(
     )
     return res
   } catch (err) {
-    console.error('Falha na chamada de análise de compatibilidade:', err)
+    console.error('Falha na análise de compatibilidade:', err)
     return {
       analisado: false,
       totalCandidatos: 0,
       compatibilidades: [],
       erro: 'Não foi possível carregar a análise de compatibilidade no momento.',
     }
+  }
+}
+
+/**
+ * Envia uma denúncia sobre um anúncio de animal via endpoint protegido no backend.
+ * Endpoint: POST /backend/v1/denunciar
+ */
+export async function denunciarAnuncio(
+  animalId: string,
+  motivo?: string,
+): Promise<{ sucesso: boolean; mensagem: string }> {
+  try {
+    const res = await pb.send<{ sucesso: boolean; mensagem: string }>('/backend/v1/denunciar', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ animalId, motivo: motivo ? motivo.trim() : undefined }),
+    })
+    return res
+  } catch (err) {
+    console.error('Erro ao enviar denúncia:', err)
+    throw err
   }
 }

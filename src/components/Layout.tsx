@@ -188,8 +188,9 @@ export default function Layout() {
             {/* Ícones sociais fictícios */}
             <div className="flex items-center gap-4 text-[#6b6b6b]">
               <a
-                href="#instagram"
-                onClick={(e) => e.preventDefault()}
+                href="https://instagram.com/reencontroanimaisperdidos"
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label="Instagram do Reencontro"
                 className="w-9 h-9 rounded-full bg-[#faf7f2] border border-[#e5e0d8] flex items-center justify-center hover:text-[#2d8f6f] hover:border-[#2d8f6f] transition-colors"
               >

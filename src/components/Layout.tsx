@@ -192,9 +192,13 @@ export default function Layout() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram do Reencontro"
-                className="w-9 h-9 rounded-full bg-[#faf7f2] border border-[#e5e0d8] flex items-center justify-center hover:text-[#2d8f6f] hover:border-[#2d8f6f] transition-colors"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white shadow-xs border border-transparent transition-all duration-200 hover:opacity-90 hover:scale-105 active:scale-95"
+                style={{
+                  background:
+                    'radial-gradient(circle at 30% 107%, #FEDA75 0%, #FA7E1E 45%, #D62976 70%, #962FBF 100%)',
+                }}
               >
-                <Instagram className="w-4 h-4" />
+                <Instagram className="w-4 h-4 text-white" />
               </a>
               <a
                 href="#facebook"

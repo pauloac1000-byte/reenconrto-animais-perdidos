@@ -86,7 +86,7 @@ export const AnimalCompativelCard: React.FC<AnimalCompativelCardProps> = ({ item
             src={animal.fotoUrl}
             alt={`${animal.especie} - ${animal.tipo}`}
             onError={() => setImgError(true)}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-cover object-top"
             loading="lazy"
           />
         ) : (

@@ -396,7 +396,7 @@ export default function PossiveisCorrespondencias() {
                       <img
                         src={cand.fotoUrl}
                         alt={`${cand.especie} - ${cand.tipo}`}
-                        className="w-full h-full object-cover object-center"
+                        className="w-full h-full object-cover object-top"
                         loading="lazy"
                       />
                     ) : (

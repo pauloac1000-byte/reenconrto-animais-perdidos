@@ -94,7 +94,7 @@ export const AnimalCard: React.FC<AnimalCardProps> = ({ animal }) => {
             src={animal.fotoUrl}
             alt={`${animal.especie} - ${animal.tipo === 'reunido' ? 'Reunido com a família' : isPerdido ? 'Perdido' : 'Procura-se o dono'}`}
             onError={() => setImgError(true)}
-            className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
         ) : (

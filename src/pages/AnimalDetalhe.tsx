@@ -782,16 +782,16 @@ export default function AnimalDetalhe() {
       {/* Cartão Principal do Animal */}
       <article className="bg-white rounded-[24px] border border-[#e5e0d8] shadow-[0_6px_24px_rgba(0,0,0,0.05)] overflow-hidden">
         {/* Foto Ampliada no Topo (destaque grande) */}
-        <div className="relative w-full aspect-[16/10] sm:aspect-[16/9] max-h-[500px] bg-[#faf7f2] overflow-hidden border-b border-[#e5e0d8]">
+        <div className="relative w-full bg-[#faf7f2] overflow-hidden border-b border-[#e5e0d8]">
           {!imgError && animal.fotoUrl ? (
             <img
               src={animal.fotoUrl}
               alt={`${animal.especie} - ${animal.tipo === 'reunido' ? 'Reunido com a família' : isPerdido ? 'Perdido' : 'Procura-se o dono'}`}
               onError={() => setImgError(true)}
-              className="w-full h-full object-cover object-center"
+              className="block w-full h-auto max-h-[500px] object-contain"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-[#6b6b6b] p-8 bg-[#f2ede4]">
+            <div className="w-full min-h-[300px] flex flex-col items-center justify-center text-[#6b6b6b] p-8 bg-[#f2ede4]">
               <PawPrint className="w-16 h-16 text-[#2d8f6f]/40 mb-3" />
               <span className="text-sm font-semibold">Foto indisponível para este animal</span>
             </div>
